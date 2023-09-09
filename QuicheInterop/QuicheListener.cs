@@ -14,7 +14,7 @@ namespace QuicheInterop
     {
         private QuicheConfig _config;
         private Socket _socket;
-        private Func<QuicConnection, SslClientHelloInfo, CancellationToken, ValueTask<QuicServerConnectionOptions>> _connectionCallback;
+        private Func<QuicConnection, SslClientHelloInfo, CancellationToken, ValueTask<QuicServerConnectionOptions>>? _connectionCallback = null;
         private int _pendingConnectionsCapacity;
         public IPEndPoint LocalEndPoint { get; }
         internal static ValueTask<QuicheListener> ListenAsync(QuicListenerOptions options)

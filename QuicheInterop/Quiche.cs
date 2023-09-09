@@ -21,33 +21,23 @@ namespace QuicheInterop
         {
         }
 
-        static unsafe Quiche()
+        static Quiche()
         {
-            if (!QuicheApi.IsValid)
-            {
-                throw new NullReferenceException();
-            }
-
-            Version = Encoding.UTF8.GetString(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(QuicheApi.QuicheVersion()));
+            Version = QuicheApi.Version;
         }
 
-        public unsafe QuicheHeaderInfo GetHeaderInfo(ReadOnlySpan<byte> buffer)
+        public QuicheHeaderInfo GetHeaderInfo(ReadOnlySpan<byte> buffer)
         {
-            uint version;
-            byte type;
             string scid, dcid, token;
+            Span<byte> scidSpan = stackalloc byte[QuicheConstants.MaxConnIdLen];
+            Span<byte> dcidSpan = stackalloc byte[QuicheConstants.MaxConnIdLen];
+            Span<byte> tokenSpan = stackalloc byte[QuicheConstants.MaxConnIdLen];
 
-            fixed (byte* ptr = buffer)
-            {
-                byte* scidPtr = stackalloc byte[QuicheConstants.MaxConnIdLen], dcidPtr = stackalloc byte[QuicheConstants.MaxConnIdLen], tokenPtr = stackalloc byte[QuicheConstants.MaxConnIdLen];
-                ulong scidLen, dcidLen, tokenLen;
+            QuicheApi.QuicheHeaderInfo(buffer, (ulong)buffer.Length, 0, out var version, out var type, scidSpan, out var scidLen, dcidSpan, out var dcidLen, tokenSpan, out var tokenLen);
 
-                QuicheApi.QuicheHeaderInfo(ptr, (ulong)buffer.Length, 0, &version, &type, scidPtr, &scidLen, dcidPtr, &dcidLen, tokenPtr, &tokenLen);
-
-                scid = Encoding.ASCII.GetString(scidPtr, (int)scidLen);
-                dcid = Encoding.ASCII.GetString(dcidPtr, (int)dcidLen);
-                token = Encoding.ASCII.GetString(tokenPtr, (int)tokenLen);
-            }
+            scid = Encoding.ASCII.GetString(scidSpan[..(int)scidLen]);
+            dcid = Encoding.ASCII.GetString(dcidSpan[..(int)dcidLen]);
+            token = Encoding.ASCII.GetString(tokenSpan[..(int)tokenLen]);
 
             return new QuicheHeaderInfo(version, type, scid, dcid, token);
         }
@@ -64,81 +54,51 @@ namespace QuicheInterop
             return (sockAddr, (ulong)writtenBytes);
         }
 
-        private unsafe ulong GetLength(int length)
+        private unsafe nuint GetLength(int length)
         {
-            return (ulong)length;
+            return (nuint)length;
         }
 
-        public unsafe QuicheConnection Accept(ReadOnlySpan<byte> sourceConnectionId, ReadOnlySpan<byte> otherDestinationConnectionId, IPEndPoint local, IPEndPoint peer, QuicheConfig config)
+        public QuicheConnection Accept(ReadOnlySpan<byte> sourceConnectionId, ReadOnlySpan<byte> otherDestinationConnectionId, IPEndPoint local, IPEndPoint peer, QuicheConfig config)
         {
             (SystemStructures.SockAddr localSockAddr, ulong localSockAddrLen) = GetSockAddr(local);
             (SystemStructures.SockAddr peerSockAddr, ulong peerSockAddrLen) = GetSockAddr(peer);
 
-            fixed (byte* scidPtr = sourceConnectionId)
-            fixed (byte* odcidPtr = otherDestinationConnectionId)
-            {
-                return new QuicheConnection(QuicheApi.QuicheAccept(scidPtr, (ulong)sourceConnectionId.Length, odcidPtr, (ulong)otherDestinationConnectionId.Length, &localSockAddr, localSockAddrLen, &peerSockAddr, peerSockAddrLen, config.Handle.DangerousGetHandle()));
-            }
+            return new QuicheConnection(QuicheApi.QuicheAccept(sourceConnectionId, (nuint)sourceConnectionId.Length, otherDestinationConnectionId, (nuint)otherDestinationConnectionId.Length, ref localSockAddr, (nuint)localSockAddrLen, ref peerSockAddr, (nuint)peerSockAddrLen, config.Handle));
         }
         public unsafe QuicheConnection Connect(string hostname, ReadOnlySpan<byte> sourceConnectionId, IPEndPoint local, IPEndPoint peer, QuicheConfig config)
         {
             (SystemStructures.SockAddr localSockAddr, ulong localSockAddrLen) = GetSockAddr(local);
             (SystemStructures.SockAddr peerSockAddr, ulong peerSockAddrLen) = GetSockAddr(peer);
 
-            fixed (byte* hostnamePtr = Encoding.ASCII.GetBytes(hostname + byte.MinValue))
-            fixed (byte* scidPtr = sourceConnectionId)
-            {
-                try
-                {
-                    bool success = true;
-                    config.Handle.DangerousAddRef(ref success);
-                    var handle = QuicheApi.QuicheConnect(hostnamePtr, scidPtr, (ulong)sourceConnectionId.Length, &localSockAddr, (ulong)sizeof(SystemStructures.SockAddr), &peerSockAddr, (ulong)sizeof(SystemStructures.SockAddr), config.Handle.DangerousGetHandle());
-                    return new QuicheConnection(handle);
-                }
-                finally
-                {
-                    config.Handle.DangerousRelease();
-                }
-            }
+            var handle = QuicheApi.QuicheConnect(hostname, sourceConnectionId, (nuint)sourceConnectionId.Length, ref localSockAddr, (nuint)sizeof(SystemStructures.SockAddr), ref peerSockAddr, (nuint)sizeof(SystemStructures.SockAddr), config.Handle);
+            return new QuicheConnection(handle);
         }
 
-        public unsafe List<byte> CreateNegotiateVersionPacket(ReadOnlySpan<byte> sourceConnectionId, ReadOnlySpan<byte> destinationConnectionId)
+        public List<byte> CreateNegotiateVersionPacket(ReadOnlySpan<byte> sourceConnectionId, ReadOnlySpan<byte> destinationConnectionId)
         {
-            Span<byte> buffer = new byte[QuicheConstants.MaxDatagramSize];
+            Span<byte> buffer = stackalloc byte[QuicheConstants.MaxDatagramSize];
             long packetLen = 0;
-            fixed (byte* scidPtr = sourceConnectionId)
-            fixed (byte* dcidPtr = destinationConnectionId)
-            fixed (byte* bufferPtr = buffer)
-            {
-                packetLen = QuicheApi.QuicheNegotiateVersion(scidPtr, (ulong)sourceConnectionId.Length, dcidPtr, (ulong)destinationConnectionId.Length, bufferPtr, (ulong)buffer.Length);
-            }
+            packetLen = QuicheApi.QuicheNegotiateVersion(sourceConnectionId, (nuint)sourceConnectionId.Length, destinationConnectionId, (nuint)destinationConnectionId.Length, buffer, (nuint)buffer.Length);
             return new List<byte>(buffer[..(int)packetLen].ToArray());
         }
 
-        public unsafe List<byte> CreateRetryPacket(ReadOnlySpan<byte> sourceConnectionId, ReadOnlySpan<byte> destinationConnectionId, ReadOnlySpan<byte> newSourceConnectionId, ReadOnlySpan<byte> token, uint version)
+        public List<byte> CreateRetryPacket(ReadOnlySpan<byte> sourceConnectionId, ReadOnlySpan<byte> destinationConnectionId, ReadOnlySpan<byte> newSourceConnectionId, ReadOnlySpan<byte> token, uint version)
         {
-            Span<byte> buffer = new byte[QuicheConstants.MaxDatagramSize];
-            int writtenBytes;
-            fixed (byte* scidPtr = sourceConnectionId)
-            fixed (byte* dcidPtr = destinationConnectionId)
-            fixed (byte* newScidPtr = newSourceConnectionId)
-            fixed (byte* tokenPtr = sourceConnectionId)
-            fixed (byte* bufferPtr = buffer)
-            {
-                writtenBytes = (int) QuicheApi.QuicheRetry(
-                    scidPtr, GetLength(sourceConnectionId.Length),
-                    dcidPtr, GetLength(destinationConnectionId.Length),
-                    newScidPtr, GetLength(newSourceConnectionId.Length),
-                    tokenPtr, GetLength(token.Length),
-                    version, bufferPtr, GetLength(buffer.Length)
+            Span<byte> buffer = stackalloc byte[QuicheConstants.MaxDatagramSize];
+            int writtenBytes = (int)QuicheApi.QuicheRetry(
+                    sourceConnectionId, GetLength(sourceConnectionId.Length),
+                    destinationConnectionId, GetLength(destinationConnectionId.Length),
+                    newSourceConnectionId, GetLength(newSourceConnectionId.Length),
+                    token, GetLength(token.Length),
+                    version, buffer, GetLength(buffer.Length)
                 );
-            }
             return new(buffer[..writtenBytes].ToArray());
         }
 
-        public unsafe bool CheckVersionSupport(uint version)
+        public bool CheckVersionSupport(uint version)
         {
-            return QuicheApi.QuicheVersionIsSupported(version) > 0;
+            return QuicheApi.QuicheVersionIsSupported(version);
         }
     }
 }

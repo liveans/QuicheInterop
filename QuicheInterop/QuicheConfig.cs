@@ -19,59 +19,47 @@ namespace QuicheInterop
             _handle.DangerousAddRef(ref success);
         }
 
-        internal unsafe int LoadCertChainFromPemFile(string path)
+        internal int LoadCertChainFromPemFile(string path)
         {
-            fixed (byte* pathPtr = Encoding.ASCII.GetBytes(path + byte.MinValue)) // Add null termination character at the end
-            {
-                return QuicheApi.QuicheConfigLoadCertChainFromPemFile(_handle.DangerousGetHandle(), pathPtr);
-            }
+            return QuicheApi.QuicheConfigLoadCertChainFromPemFile(_handle, path);
         }
 
-        internal unsafe int LoadPrivKeyFromPemFile(string path)
+        internal int LoadPrivKeyFromPemFile(string path)
         {
-            fixed (byte* pathPtr = Encoding.ASCII.GetBytes(path + byte.MinValue)) // Add null termination character at the end
-            {
-                return QuicheApi.QuicheConfigLoadPrivKeyFromPemFile(_handle.DangerousGetHandle(), pathPtr);
-            }
+            return QuicheApi.QuicheConfigLoadPrivKeyFromPemFile(_handle, path);
         }
 
-        internal unsafe int LoadVerifyLocationsFromFile(string path)
+        internal int LoadVerifyLocationsFromFile(string path)
         {
-            fixed (byte* pathPtr = Encoding.ASCII.GetBytes(path + byte.MinValue)) // Add null termination character at the end
-            {
-                return QuicheApi.QuicheConfigLoadVerifyLocationsFromFile(_handle.DangerousGetHandle(), pathPtr);
-            }
+            return QuicheApi.QuicheConfigLoadVerifyLocationsFromFile(_handle, path);
         }
 
-        internal unsafe int LoadVerifyLocationsFromDirectory(string path)
+        internal int LoadVerifyLocationsFromDirectory(string path)
         {
-            fixed (byte* pathPtr = Encoding.ASCII.GetBytes(path + byte.MinValue)) // Add null termination character at the end
-            {
-                return QuicheApi.QuicheConfigLoadVerifyLocationsFromDirectory(_handle.DangerousGetHandle(), pathPtr);
-            }
+            return QuicheApi.QuicheConfigLoadVerifyLocationsFromDirectory(_handle, path);
         }
 
-        internal unsafe void EnableVerifyPeer(bool v = true)
+        internal void EnableVerifyPeer(bool v = true)
         {
-            QuicheApi.QuicheConfigVerifyPeer(_handle.DangerousGetHandle(), Convert.ToByte(v));
+            QuicheApi.QuicheConfigVerifyPeer(_handle, v);
         }
 
-        internal unsafe void EnableGrease(bool v = true)
+        internal void EnableGrease(bool v = true)
         {
-            QuicheApi.QuicheConfigGrease(_handle.DangerousGetHandle(), Convert.ToByte(v));
+            QuicheApi.QuicheConfigGrease(_handle, v);
         }
 
-        internal unsafe void EnableLogKeys()
+        internal void EnableLogKeys()
         {
-            QuicheApi.QuicheConfigLogKeys(_handle.DangerousGetHandle());
+            QuicheApi.QuicheConfigLogKeys(_handle);
         }
 
-        internal unsafe void EnableEarlyData()
+        internal void EnableEarlyData()
         {
-            QuicheApi.QuicheConfigEnableEarlyData(_handle.DangerousGetHandle());
+            QuicheApi.QuicheConfigEnableEarlyData(_handle);
         }
 
-        public unsafe int SetApplicationProtocols(ReadOnlySpan<SslApplicationProtocol> protocols)
+        public int SetApplicationProtocols(ReadOnlySpan<SslApplicationProtocol> protocols)
         {
             List<byte> alpns = new();
             foreach (var proto in protocols)
@@ -80,124 +68,118 @@ namespace QuicheInterop
                 alpns.Add((byte)protocol.Length);
                 alpns.AddRange(protocol.ToArray());
             }
-            //alpns.Add(0); // Add null termination character at the end
-            fixed (byte* alpnsPointer = alpns.ToArray())
-            {
-                return QuicheApi.QuicheConfigSetApplicationProtocols(_handle.DangerousGetHandle(), alpnsPointer, (ulong)alpns.Count);
-            }
+
+            return QuicheApi.QuicheConfigSetApplicationProtocols(_handle, new ReadOnlySpan<byte>(alpns.ToArray()), (nuint)alpns.Count);
         }
 
-        internal unsafe void SetMaxIdleTimeout(ulong maxIdleTimeout)
+        internal void SetMaxIdleTimeout(ulong maxIdleTimeout)
         {
-            QuicheApi.QuicheConfigSetMaxIdleTimeout(_handle.DangerousGetHandle(), maxIdleTimeout);
+            QuicheApi.QuicheConfigSetMaxIdleTimeout(_handle, maxIdleTimeout);
         }
 
-        internal unsafe void SetMaxRecvUdpPayloadSize(ulong value)
+        internal void SetMaxRecvUdpPayloadSize(ulong value)
         {
-            QuicheApi.QuicheConfigSetMaxRecvUdpPayloadSize(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetMaxRecvUdpPayloadSize(_handle, (nuint)value);
         }
 
-        internal unsafe void SetMaxSendUdpPayloadSize(ulong value)
+        internal void SetMaxSendUdpPayloadSize(ulong value)
         {
-            QuicheApi.QuicheConfigSetMaxSendUdpPayloadSize(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetMaxSendUdpPayloadSize(_handle, (nuint)value);
         }
 
-        internal unsafe void SetInitialMaxData(ulong value)
+        internal void SetInitialMaxData(ulong value)
         {
-            QuicheApi.QuicheConfigSetInitialMaxData(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetInitialMaxData(_handle, value);
         }
 
-        internal unsafe void SetInitialMaxStreamDataBidiLocal(ulong value)
+        internal void SetInitialMaxStreamDataBidiLocal(ulong value)
         {
-            QuicheApi.QuicheConfigSetInitialMaxStreamDataBidiLocal(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetInitialMaxStreamDataBidiLocal(_handle, value);
         }
 
-        internal unsafe void SetInitialMaxStreamDataBidiRemote(ulong value)
+        internal void SetInitialMaxStreamDataBidiRemote(ulong value)
         {
-            QuicheApi.QuicheConfigSetInitialMaxStreamDataBidiRemote(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetInitialMaxStreamDataBidiRemote(_handle, value);
         }
 
-        internal unsafe void SetInitialMaxStreamDataUni(ulong value)
+        internal void SetInitialMaxStreamDataUni(ulong value)
         {
-            QuicheApi.QuicheConfigSetInitialMaxStreamDataUni(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetInitialMaxStreamDataUni(_handle, value);
         }
 
-        internal unsafe void SetInitialMaxStreamsBidi(ulong value)
+        internal void SetInitialMaxStreamsBidi(ulong value)
         {
-            QuicheApi.QuicheConfigSetInitialMaxStreamsBidi(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetInitialMaxStreamsBidi(_handle, value);
         }
 
-        internal unsafe void SetInitialMaxStreamsUni(ulong value)
+        internal void SetInitialMaxStreamsUni(ulong value)
         {
-            QuicheApi.QuicheConfigSetInitialMaxStreamsUni(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetInitialMaxStreamsUni(_handle, value);
         }
 
-        internal unsafe void SetAckDelayExponent(ulong value)
+        internal void SetAckDelayExponent(ulong value)
         {
-            QuicheApi.QuicheConfigSetAckDelayExponent(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetAckDelayExponent(_handle, value);
         }
 
-        internal unsafe void SetMaxAckDelay(ulong value)
+        internal void SetMaxAckDelay(ulong value)
         {
-            QuicheApi.QuicheConfigSetMaxAckDelay(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetMaxAckDelay(_handle, value);
         }
 
-        internal unsafe void SetDisableActiveMigration(bool value)
+        internal void SetDisableActiveMigration(bool value)
         {
-            QuicheApi.QuicheConfigSetDisableActiveMigration(_handle.DangerousGetHandle(), Convert.ToByte(value));
+            QuicheApi.QuicheConfigSetDisableActiveMigration(_handle, value);
         }
 
-        internal unsafe void SetCcAlgorithm(QuicheCcAlgorithm value)
+        internal void SetCcAlgorithm(QuicheCcAlgorithm value)
         {
-            QuicheApi.QuicheConfigSetCcAlgorithm(_handle.DangerousGetHandle(), (int)value);
+            QuicheApi.QuicheConfigSetCcAlgorithm(_handle, value);
         }
 
-        internal unsafe void EnableHystart(bool value)
+        internal void EnableHystart(bool value)
         {
-            QuicheApi.QuicheConfigEnableHystart(_handle.DangerousGetHandle(), Convert.ToByte(value));
+            QuicheApi.QuicheConfigEnableHystart(_handle, value);
         }
 
-        internal unsafe void EnablePacing(bool value)
+        internal void EnablePacing(bool value)
         {
-            QuicheApi.QuicheConfigEnablePacing(_handle.DangerousGetHandle(), Convert.ToByte(value));
+            QuicheApi.QuicheConfigEnablePacing(_handle, value);
         }
 
-        internal unsafe void SetMaxPacingRate(ulong value)
+        internal void SetMaxPacingRate(ulong value)
         {
-            QuicheApi.QuicheConfigSetMaxPacingRate(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetMaxPacingRate(_handle, value);
         }
 
-        internal unsafe void EnableDatagram(bool enabled, ulong recvQueueLen, ulong sendQueueLen)
+        internal void EnableDatagram(bool enabled, ulong recvQueueLen, ulong sendQueueLen)
         {
-            QuicheApi.QuicheConfigEnableDgram(_handle.DangerousGetHandle(), Convert.ToByte(enabled), recvQueueLen, sendQueueLen);
+            QuicheApi.QuicheConfigEnableDgram(_handle, enabled, (nuint)recvQueueLen, (nuint)sendQueueLen);
         }
 
-        internal unsafe void SetMaxConnectionWindow(ulong value)
+        internal void SetMaxConnectionWindow(ulong value)
         {
-            QuicheApi.QuicheConfigSetMaxConnectionWindow(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetMaxConnectionWindow(_handle, value);
         }
 
-        internal unsafe void SetMaxStreamWindow(ulong value)
+        internal void SetMaxStreamWindow(ulong value)
         {
-            QuicheApi.QuicheConfigSetMaxStreamWindow(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetMaxStreamWindow(_handle, value);
         }
 
-        internal unsafe void SetActiveConnectionIdLimit(ulong value)
+        internal void SetActiveConnectionIdLimit(ulong value)
         {
-            QuicheApi.QuicheConfigSetActiveConnectionIdLimit(_handle.DangerousGetHandle(), value);
+            QuicheApi.QuicheConfigSetActiveConnectionIdLimit(_handle, value);
         }
 
-        internal unsafe void SetStatelessResetToken(byte[] token)
+        internal void SetStatelessResetToken(ReadOnlySpan<byte> token)
         {
             if (token.Length < 16)
             {
                 throw new ArgumentException("Token must be at least 16 bytes.");
             }
 
-            fixed (byte* tokenPtr = token)
-            {
-                QuicheApi.QuicheConfigSetStatelessResetToken(_handle.DangerousGetHandle(), tokenPtr);
-            }
+            QuicheApi.QuicheConfigSetStatelessResetToken(_handle, token);
         }
     }
 }

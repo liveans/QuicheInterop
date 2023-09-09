@@ -18,8 +18,7 @@ namespace QuicheInterop
 
         internal unsafe QuicheStream? Next()
         {
-            ulong streamId = 0;
-            bool success = QuicheApi.QuicheStreamIterNext(_handle.DangerousGetHandle(), &streamId) > 0;
+            bool success = QuicheApi.QuicheStreamIterNext(_handle, out ulong streamId);
             return success ? new QuicheStream(_connection, streamId) : null;
         }
 

@@ -11,5 +11,6 @@ namespace QuicheInterop
         Reno = 0,
         Cubic = 1,
         Bbr = 2,
+        Bbr2 = 3,
     }
 }

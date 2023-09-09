@@ -34,24 +34,17 @@ namespace QuicheInterop
         {
             (_localAddress, var _) = GetSockAddr(local);
             (_peerAddress, var _) = GetSockAddr(peer);
-            fixed (byte* scidPtr = sourceConnectionId)
-            fixed (byte* oDcidPtr = oDestinationConnectionId)
-            fixed (SystemStructures.SockAddr* localPtr = &_localAddress)
-            fixed (SystemStructures.SockAddr* peerPtr = &_peerAddress)
-            {
-                _handle = new QuicheConnectionSafeHandle(
+            _handle = new QuicheConnectionSafeHandle(
                     QuicheApi.QuicheConnNewWithTls(
-                        scidPtr, (ulong)sourceConnectionId.Length,
-                        oDcidPtr, (ulong)oDestinationConnectionId.Length,
-                        localPtr, (ulong)sizeof(SystemStructures.SockAddr),
-                        peerPtr, (ulong)sizeof(SystemStructures.SockAddr),
-                        config.Handle.DangerousGetHandle(),
+                        sourceConnectionId, (nuint)sourceConnectionId.Length,
+                        oDestinationConnectionId, (nuint)oDestinationConnectionId.Length,
+                        ref _localAddress, (nuint)sizeof(SystemStructures.SockAddr),
+                        ref _peerAddress, (nuint)sizeof(SystemStructures.SockAddr),
+                        config.Handle,
                         ssl,
-                        Convert.ToByte(isServer)
+                        isServer
                 )
             );
-            }
-
         }
 
         public unsafe static (SystemStructures.SockAddr, ulong) GetSockAddr(IPEndPoint endpoint)
@@ -67,202 +60,172 @@ namespace QuicheInterop
 
         public unsafe bool SetKeylogPath(string path)
         {
-            fixed (byte* pathPtr = Encoding.ASCII.GetBytes(path + byte.MinValue))
-            {
-                return QuicheApi.QuicheConnSetKeylogPath(_handle.DangerousGetHandle(), pathPtr) > 0;
-            }
+            return QuicheApi.QuicheConnSetKeylogPath(_handle, path);
         }
 
         public unsafe bool SetQlogPath(string path, string logTitle, string logDesc)
         {
-            fixed (byte* pathPtr = Encoding.ASCII.GetBytes(path + byte.MinValue))
-            fixed (byte* logTitlePtr = Encoding.ASCII.GetBytes(logTitle + byte.MinValue))
-            fixed (byte* logDescPtr = Encoding.ASCII.GetBytes(logDesc + byte.MinValue))
-            {
-                return QuicheApi.QuicheConnSetQlogPath(_handle.DangerousGetHandle(), pathPtr, logTitlePtr, logDescPtr) > 0;
-            }
+            return QuicheApi.QuicheConnSetQlogPath(_handle, path, logTitle, logDesc);
         }
 
-        public unsafe int SetSession(ReadOnlySpan<byte> session)
+        public int SetSession(ReadOnlySpan<byte> session)
         {
-            fixed (byte* sessionPtr = session)
-            {
-                return QuicheApi.QuicheConnSetSession(_handle.DangerousGetHandle(), sessionPtr, (ulong)session.Length);
-            }
+            return QuicheApi.QuicheConnSetSession(_handle, session, (nuint)session.Length);
         }
 
-        public unsafe long Recv(Span<byte> buffer, int dataLen, QuicheRecvInfo recvInfo)
+        public long Recv(Span<byte> buffer, int dataLen, QuicheRecvInfo recvInfo)
         {
-            long writtenBytes = 0;
-            fixed (byte* bufferPtr = buffer)
-            {
-                writtenBytes = QuicheApi.QuicheConnRecv(_handle.DangerousGetHandle(), bufferPtr, (ulong) dataLen, &recvInfo);
-            }
-            //bufferTemp.CopyTo(buffer);
-            return writtenBytes;
+            return QuicheApi.QuicheConnRecv(_handle, buffer, (ulong)dataLen, ref recvInfo);
         }
 
-        public unsafe (int, QuicheSendInfo) CreateSendPacket(Span<byte> buffer)
+        public (int, QuicheSendInfo) CreateSendPacket(Span<byte> buffer)
         {
-            QuicheSendInfo sendInfo;
-            fixed (byte* bufferPtr = buffer) // Pin the buffer
-            {
-                var writtenBytes = (int) QuicheApi.QuicheConnSend(_handle.DangerousGetHandle(), bufferPtr, (ulong)buffer.Length, &sendInfo);
-                return (writtenBytes, sendInfo);
-            }
+            var writtenBytes = (int)QuicheApi.QuicheConnSend(_handle, buffer, (ulong)buffer.Length, out var sendInfo);
+            return (writtenBytes, sendInfo);
         }
 
-        public unsafe (int, QuicheSendInfo) CreateSendPacket(byte[] buffer)
+        public (int, QuicheSendInfo) CreateSendPacket(byte[] buffer)
         {
             return CreateSendPacket(new Span<byte>(buffer));
         }
 
-        public unsafe ulong SendQuantum()
+        public ulong SendQuantum()
         {
-            return QuicheApi.QuicheConnSendQuantum(_handle.DangerousGetHandle());
+            return QuicheApi.QuicheConnSendQuantum(_handle);
         }
 
-        internal unsafe QuicheStream GetNextReadableStream()
+        internal QuicheStream GetNextReadableStream()
         {
-            var streamId = QuicheApi.QuicheConnStreamReadableNext(_handle.DangerousGetHandle());
+            var streamId = QuicheApi.QuicheConnStreamReadableNext(_handle);
             if (streamId == -1)
             {
                 // TODO: Handle no stream available case
             }
-            return new QuicheStream(this, (ulong) streamId);
+            return new QuicheStream(this, (ulong)streamId);
         }
 
-        internal unsafe QuicheStream GetNextWritableStream()
+        internal QuicheStream GetNextWritableStream()
         {
-            var streamId = QuicheApi.QuicheConnStreamWritableNext(_handle.DangerousGetHandle());
+            var streamId = QuicheApi.QuicheConnStreamWritableNext(_handle);
             if (streamId == -1)
             {
                 // TODO: Handle no stream available case
             }
-            return new QuicheStream(this, (ulong) streamId);
+            return new QuicheStream(this, (ulong)streamId);
         }
 
-        internal unsafe QuicheStreamIterator GetReadableStreamsIterator()
+        internal QuicheStreamIterator GetReadableStreamsIterator()
         {
-            return new(QuicheApi.QuicheConnReadable(_handle.DangerousGetHandle()), this);
+            return new(QuicheApi.QuicheConnReadable(_handle), this);
         }
 
-        internal unsafe QuicheStreamIterator GetWritableStreamsIterator()
+        internal QuicheStreamIterator GetWritableStreamsIterator()
         {
-            return new(QuicheApi.QuicheConnWritable(_handle.DangerousGetHandle()), this);
+            return new(QuicheApi.QuicheConnWritable(_handle), this);
         }
 
-        internal unsafe ulong GetMaxSendUdpPayloadSize()
+        internal ulong GetMaxSendUdpPayloadSize()
         {
-            return QuicheApi.QuicheConnMaxSendUdpPayloadSize(_handle.DangerousGetHandle());
+            return QuicheApi.QuicheConnMaxSendUdpPayloadSize(_handle);
         }
 
-        internal unsafe ulong GetTimeoutAsNanos()
+        internal ulong GetTimeoutAsNanos()
         {
-            return QuicheApi.QuicheConnTimeoutAsNanos(_handle.DangerousGetHandle());
+            return QuicheApi.QuicheConnTimeoutAsNanos(_handle);
         }
 
-        internal unsafe ulong GetTimeoutAsMillis()
+        internal ulong GetTimeoutAsMillis()
         {
-            return QuicheApi.QuicheConnTimeoutAsMillis(_handle.DangerousGetHandle());
+            return QuicheApi.QuicheConnTimeoutAsMillis(_handle);
         }
 
-        internal unsafe void ProcessTimeoutEvent()
+        internal void ProcessTimeoutEvent()
         {
-            QuicheApi.QuicheConnOnTimeout(_handle.DangerousGetHandle());
+            QuicheApi.QuicheConnOnTimeout(_handle);
         }
 
-        internal unsafe int Close(bool isApplicationError, int errorCode, string reason) => Close(isApplicationError, errorCode, Encoding.ASCII.GetBytes(reason));
+        internal int Close(bool isApplicationError, int errorCode, string reason) => Close(isApplicationError, errorCode, Encoding.ASCII.GetBytes(reason));
 
-        internal unsafe int Close(bool isApplicationError, int errorCode, ReadOnlySpan<byte> reason)
+        internal int Close(bool isApplicationError, int errorCode, ReadOnlySpan<byte> reason)
         {
-            fixed (byte* reasonPtr = reason)
-            {
-                return QuicheApi.QuicheConnClose(_handle.DangerousGetHandle(), Convert.ToByte(isApplicationError), (ulong)errorCode, reasonPtr, (ulong)reason.Length);
-            }
+            return QuicheApi.QuicheConnClose(_handle, isApplicationError, (ulong)errorCode, reason, (ulong)reason.Length);
         }
 
         internal unsafe ReadOnlySpan<byte> GetTraceId()
         {
             byte* result;
-            ulong resultLen;
-            QuicheApi.QuicheConnTraceId(_handle.DangerousGetHandle(), &result, &resultLen);
-            return new(result, (int) resultLen);
+            QuicheApi.QuicheConnTraceId(_handle, &result, out var resultLen);
+            return new(result, (int)resultLen);
         }
 
         internal unsafe ReadOnlySpan<byte> GetSourceId()
         {
             byte* result;
-            ulong resultLen;
-            QuicheApi.QuicheConnSourceId(_handle.DangerousGetHandle(), &result, &resultLen);
-            return new(result, (int) resultLen);
+            QuicheApi.QuicheConnSourceId(_handle, &result, out var resultLen);
+            return new(result, (int)resultLen);
         }
 
         internal unsafe ReadOnlySpan<byte> GetDestinationId()
         {
             byte* result;
-            ulong resultLen;
-            QuicheApi.QuicheConnDestinationId(_handle.DangerousGetHandle(), &result, &resultLen);
-            return new(result, (int) resultLen);
+            QuicheApi.QuicheConnDestinationId(_handle, &result, out var resultLen);
+            return new(result, (int)resultLen);
         }
 
         internal unsafe ReadOnlySpan<byte> GetNegotiatedALPN()
         {
             byte* result;
-            ulong resultLen;
-            QuicheApi.QuicheConnApplicationProto(_handle.DangerousGetHandle(), &result, &resultLen);
-            return new(result, (int) resultLen);
+            QuicheApi.QuicheConnApplicationProto(_handle, &result, out var resultLen);
+            return new(result, (int)resultLen);
         }
 
         internal unsafe ReadOnlySpan<byte> GetPeerCertificate()
         {
             byte* result;
-            ulong resultLen;
-            QuicheApi.QuicheConnPeerCert(_handle.DangerousGetHandle(), &result, &resultLen);
-            return new(result, (int) resultLen);
+            QuicheApi.QuicheConnPeerCert(_handle, &result, out var resultLen);
+            return new(result, (int)resultLen);
         }
 
         internal unsafe ReadOnlySpan<byte> GetSession()
         {
             byte* result;
-            ulong resultLen;
-            QuicheApi.QuicheConnSession(_handle.DangerousGetHandle(), &result, &resultLen);
-            return new(result, (int) resultLen);
+            QuicheApi.QuicheConnSession(_handle, &result, out var resultLen);
+            return new(result, (int)resultLen);
         }
 
-        internal unsafe bool IsEstablished()
+        internal bool IsEstablished()
         {
-            return QuicheApi.QuicheConnIsEstablished(_handle.DangerousGetHandle()) > 0;
+            return QuicheApi.QuicheConnIsEstablished(_handle);
         }
 
-        internal unsafe bool IsInEarlyData()
+        internal bool IsInEarlyData()
         {
-            return QuicheApi.QuicheConnIsInEarlyData(_handle.DangerousGetHandle()) > 0;
+            return QuicheApi.QuicheConnIsInEarlyData(_handle);
         }
 
-        internal unsafe bool IsReadable()
+        internal bool IsReadable()
         {
-            return QuicheApi.QuicheConnIsReadable(_handle.DangerousGetHandle()) > 0;
+            return QuicheApi.QuicheConnIsReadable(_handle);
         }
 
-        internal unsafe bool IsDraining()
+        internal bool IsDraining()
         {
-            return QuicheApi.QuicheConnIsDraining(_handle.DangerousGetHandle()) > 0;
+            return QuicheApi.QuicheConnIsDraining(_handle);
         }
 
-        internal unsafe ulong GetPeerStreamsLeftBidirectionalCount()
+        internal ulong GetPeerStreamsLeftBidirectionalCount()
         {
-            return QuicheApi.QuicheConnPeerStreamsLeftBidi(_handle.DangerousGetHandle());
+            return QuicheApi.QuicheConnPeerStreamsLeftBidi(_handle);
         }
 
-        internal unsafe ulong GetPeerStreamsLeftUnidirectionalCount()
+        internal ulong GetPeerStreamsLeftUnidirectionalCount()
         {
-            return QuicheApi.QuicheConnPeerStreamsLeftUni(_handle.DangerousGetHandle());
+            return QuicheApi.QuicheConnPeerStreamsLeftUni(_handle);
         }
 
-        internal unsafe bool IsClosed()
+        internal bool IsClosed()
         {
-            return QuicheApi.QuicheConnIsClosed(_handle.DangerousGetHandle()) > 0;
+            return QuicheApi.QuicheConnIsClosed(_handle);
         }
 
         private QuicheGenericError GenerateError(bool isApp, ulong errorCode, ReadOnlySpan<byte> reason)
@@ -272,37 +235,29 @@ namespace QuicheInterop
 
         internal unsafe QuicheGenericError? ProcessPeerError()
         {
-            byte isApp;
-            ulong errorCode;
             byte* reason;
-            ulong reasonLen;
 
-            bool success = QuicheApi.QuicheConnPeerError(_handle.DangerousGetHandle(), &isApp, &errorCode, &reason, &reasonLen) > 0;
-            return success ? GenerateError(isApp > 0, errorCode, new(reason, (int) reasonLen)) : null;
+            bool success = QuicheApi.QuicheConnPeerError(_handle, out var isApp, out var errorCode, &reason, out var reasonLen);
+            return success ? GenerateError(isApp, errorCode, new(reason, (int)reasonLen)) : null;
         }
 
         internal unsafe QuicheGenericError? ProcessLocalError()
         {
-            byte isApp;
-            ulong errorCode;
             byte* reason;
-            ulong reasonLen;
 
-            bool success = QuicheApi.QuicheConnLocalError(_handle.DangerousGetHandle(), &isApp, &errorCode, &reason, &reasonLen) > 0;
-            return success ? GenerateError(isApp > 0, errorCode, new(reason, (int) reasonLen)) : null;
+            bool success = QuicheApi.QuicheConnLocalError(_handle, out var isApp, out var errorCode, &reason, out var reasonLen);
+            return success ? GenerateError(isApp, errorCode, new(reason, (int)reasonLen)) : null;
         }
 
-        internal unsafe QuicheStats Stats()
+        internal QuicheStats Stats()
         {
-            QuicheStats stats;
-            QuicheApi.QuicheConnStats(_handle.DangerousGetHandle(), &stats);
+            QuicheApi.QuicheConnStats(_handle, out var stats);
             return stats;
         }
 
         internal unsafe QuichePathStats PathStats(ulong pathIndex)
         {
-            QuichePathStats stats;
-            QuicheApi.QuicheConnPathStats(_handle.DangerousGetHandle(), Convert.ToByte(pathIndex), &stats);
+            QuicheApi.QuicheConnPathStats(_handle, Convert.ToByte(pathIndex), out var stats);
             return stats;
         }
 
@@ -313,14 +268,14 @@ namespace QuicheInterop
 
         internal unsafe long ScheduleAckElicitingPacket()
         {
-            return QuicheApi.QuicheConnSendAckEliciting(_handle.DangerousGetHandle());
+            return QuicheApi.QuicheConnSendAckEliciting(_handle);
         }
 
         internal unsafe long ScheduleAckElicitingPacket(IPEndPoint local, IPEndPoint peer)
         {
             (var localSockAddr, var _) = GetSockAddr(local);
             (var peerSockAddr, var _) = GetSockAddr(peer);
-            return QuicheApi.QuicheConnSendAckElicitingOnPath(_handle.DangerousGetHandle(), &localSockAddr, (ulong) sizeof(SystemStructures.SockAddr), &peerSockAddr, (ulong) sizeof(SystemStructures.SockAddr));
+            return QuicheApi.QuicheConnSendAckElicitingOnPath(_handle, ref localSockAddr, (nuint)sizeof(SystemStructures.SockAddr), ref peerSockAddr, (nuint)sizeof(SystemStructures.SockAddr));
         }
 
         public ValueTask DisposeAsync()

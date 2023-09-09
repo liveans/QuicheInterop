@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Net.Security;
 
-// Console.WriteLine(Quiche.Version);
+Console.WriteLine(Quiche.Version);
 
 byte[] buffer = new byte[1350];
 byte[] sendBuffer = new byte[1350];
@@ -56,7 +56,7 @@ while (true)
             readLen = socket.ReceiveFrom(buffer, ref remoteEp);
             if (readLen > 0)
             {
-                QuicheRecvInfoLifetime recvInfoLifetime = new((IPEndPoint)socket.LocalEndPoint!, (IPEndPoint)remote);
+                QuicheRecvInfoLifetime recvInfoLifetime = new((IPEndPoint)socket.LocalEndPoint!, remote);
                 var info = recvInfoLifetime.GetQuicheRecvInfo();
                 var dataLen = (int)connection.Recv(buffer, readLen, info);
                 Console.WriteLine("Data Received Len = " + dataLen);
@@ -147,7 +147,6 @@ while (true)
 
 void SendPacket()
 {
-    
     while (true)
     {
         // buffer = new byte[1350];

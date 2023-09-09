@@ -10,27 +10,41 @@ namespace QuicheInterop
     [StructLayout(LayoutKind.Sequential)]
     internal struct QuicheStats
     {
-        ulong Recv;
-        ulong Sent;
-        ulong Lost;
-        ulong Retrans;
+        /// <summary>
+        /// The number of QUIC packets received on this connection.
+        /// </summary>
+        [MarshalAs(UnmanagedType.SysUInt)] ulong Recv;
+        /// <summary>
+        /// The number of QUIC packets sent on this connection.
+        /// </summary>
+        [MarshalAs(UnmanagedType.SysUInt)] ulong Sent;
+        /// <summary>
+        /// The number of QUIC packets that were lost.
+        /// </summary>
+        [MarshalAs(UnmanagedType.SysUInt)] ulong Lost;
+        /// <summary>
+        /// The number of sent QUIC packets with retransmitted data.
+        /// </summary>
+        [MarshalAs(UnmanagedType.SysUInt)] ulong Retrans;
+        /// <summary>
+        /// The number of sent bytes.
+        /// </summary>
         ulong SentBytes;
+        /// <summary>
+        /// The number of received bytes.
+        /// </summary>
         ulong RecvBytes;
+        /// <summary>
+        /// The number of bytes lost.
+        /// </summary>
         ulong LostBytes;
+        /// <summary>
+        /// The number of stream bytes retransmitted.
+        /// </summary>
         ulong StreamRetransBytes;
-        ulong PathsCount;
-        ulong PeerMaxIdleTimeout;
-        ulong PeerMaxUdpPayloadSize;
-        ulong PeerInitialMaxData;
-        ulong PeerInitialMaxStreamDataBidiLocal;
-        ulong PeerInitialMaxStreamDataBidiRemote;
-        ulong PeerInitialMaxStreamDataUni;
-        ulong PeerInitialMaxStreamsBidi;
-        ulong PeerInitialMaxStreamsUni;
-        ulong PeerAckDelayExponent;
-        ulong PeerMaxAckDelay;
-        bool PeerDisableActiveMigration;
-        ulong PeerActiveConnIdLimit;
-        long PeerMaxDatagramFrameSize;
+        /// <summary>
+        /// The number of known paths for the connection.
+        /// </summary>
+        [MarshalAs(UnmanagedType.SysUInt)] ulong PathsCount;
     }
 }

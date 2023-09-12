@@ -33,6 +33,7 @@ namespace QuicheInterop
          *                      void *argp);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.EnableDebugLogging)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheEnableDebugLogging([MarshalAs(UnmanagedType.FunctionPtr)] QuicheLogCallback logCallback, void* argp);
         internal delegate void QuicheLogCallback([MarshalAs(UnmanagedType.LPStr)] string line, void* argp);
 
@@ -42,6 +43,7 @@ namespace QuicheInterop
          * quiche_config *quiche_config_new(uint32_t version);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.ConfigurationNew)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial QuicheConfigPtr QuicheConfigNew(uint version);
 
         /*
@@ -51,6 +53,7 @@ namespace QuicheInterop
          *                                      const char *path);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadCertChainFromPemFile)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConfigLoadCertChainFromPemFile(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
         /*
@@ -60,6 +63,7 @@ namespace QuicheInterop
          *                                    const char *path);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadPrivKeyFromPemFile)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConfigLoadPrivKeyFromPemFile(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
         /*
@@ -69,6 +73,7 @@ namespace QuicheInterop
          *                                        const char *path);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadVerifyLocationsFromFile)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConfigLoadVerifyLocationsFromFile(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
         /*
@@ -78,6 +83,7 @@ namespace QuicheInterop
          *                                             const char *path);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadVerifyLocationsFromDirectory)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConfigLoadVerifyLocationsFromDirectory(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
         /*
@@ -86,6 +92,7 @@ namespace QuicheInterop
          * void quiche_config_verify_peer(quiche_config *config, bool v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.VerifyPeer)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigVerifyPeer(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool verifyPeer);
 
         /*
@@ -94,6 +101,7 @@ namespace QuicheInterop
          * void quiche_config_grease(quiche_config *config, bool v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.Grease)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigGrease(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool grease);
 
         /*
@@ -102,6 +110,7 @@ namespace QuicheInterop
          * void quiche_config_log_keys(quiche_config *config);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LogKeys)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigLogKeys(SafeHandle configHandle);
 
         /*
@@ -110,6 +119,7 @@ namespace QuicheInterop
          * void quiche_config_enable_early_data(quiche_config *config);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnableEarlyData)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigEnableEarlyData(SafeHandle configHandle);
 
         /*
@@ -120,6 +130,7 @@ namespace QuicheInterop
          *                               size_t protos_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetApplicationProtocols)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConfigSetApplicationProtocols(SafeHandle configHandle, ReadOnlySpan<byte> protos, SizeT protosLen);
 
         /*
@@ -129,6 +140,7 @@ namespace QuicheInterop
          * void quiche_config_set_max_idle_timeout(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxIdleTimeout)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetMaxIdleTimeout(SafeHandle configHandle, ulong timeout);
 
         /*
@@ -137,6 +149,7 @@ namespace QuicheInterop
          * void quiche_config_set_max_recv_udp_payload_size(quiche_config *config, size_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxRecvUdpPayloadSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetMaxRecvUdpPayloadSize(SafeHandle configHandle, SizeT size);
 
         /*
@@ -145,6 +158,8 @@ namespace QuicheInterop
          * void quiche_config_set_max_send_udp_payload_size(quiche_config *config, size_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxSendUdpPayloadSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+
         internal static partial void QuicheConfigSetMaxSendUdpPayloadSize(SafeHandle configHandle, SizeT size);
 
         /*
@@ -153,6 +168,7 @@ namespace QuicheInterop
          * void quiche_config_set_initial_max_data(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxData)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetInitialMaxData(SafeHandle configHandle, ulong v);
 
         /*
@@ -161,6 +177,7 @@ namespace QuicheInterop
          * void quiche_config_set_initial_max_stream_data_bidi_local(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamDataBidiLocal)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetInitialMaxStreamDataBidiLocal(SafeHandle configHandle, ulong v);
 
         /*
@@ -169,6 +186,7 @@ namespace QuicheInterop
          * void quiche_config_set_initial_max_stream_data_bidi_remote(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamDataBidiRemote)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetInitialMaxStreamDataBidiRemote(SafeHandle configHandle, ulong v);
 
         /*
@@ -177,6 +195,7 @@ namespace QuicheInterop
          * void quiche_config_set_initial_max_stream_data_uni(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamDataUni)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetInitialMaxStreamDataUni(SafeHandle configHandle, ulong v);
 
         /*
@@ -185,6 +204,7 @@ namespace QuicheInterop
          * void quiche_config_set_initial_max_streams_bidi(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamsBidi)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetInitialMaxStreamsBidi(SafeHandle configHandle, ulong v);
 
         /*
@@ -193,6 +213,7 @@ namespace QuicheInterop
          * void quiche_config_set_initial_max_streams_uni(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamsUni)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetInitialMaxStreamsUni(SafeHandle configHandle, ulong v);
 
         /*
@@ -201,6 +222,7 @@ namespace QuicheInterop
          * void quiche_config_set_ack_delay_exponent(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetAckDelayExponent)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetAckDelayExponent(SafeHandle configHandle, ulong v);
 
         /*
@@ -209,6 +231,7 @@ namespace QuicheInterop
          * void quiche_config_set_max_ack_delay(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxAckDelay)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetMaxAckDelay(SafeHandle configHandle, ulong v);
 
         /*
@@ -217,6 +240,7 @@ namespace QuicheInterop
          * void quiche_config_set_disable_active_migration(quiche_config *config, bool v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetDisableActiveMigration)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetDisableActiveMigration(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool v);
 
         /*
@@ -225,6 +249,7 @@ namespace QuicheInterop
          * int quiche_config_set_cc_algorithm_name(quiche_config *config, const char *algo);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetCcAlgorithmByName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConfigSetCcAlgorithmByName(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string ccAlgorithmName);
 
         /*
@@ -233,6 +258,7 @@ namespace QuicheInterop
          * void quiche_config_set_initial_congestion_window_packets(quiche_config *config, size_t packets);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialCongestionWindowPackets)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetInitialCongestionWindowPackets(SafeHandle configHandle, SizeT packets);
 
         /*
@@ -241,6 +267,7 @@ namespace QuicheInterop
          * void quiche_config_set_cc_algorithm(quiche_config *config, enum quiche_cc_algorithm algo);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetCcAlgorithm)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetCcAlgorithm(SafeHandle configHandle, QuicheCcAlgorithm ccAlgorithm);
 
         /*
@@ -249,6 +276,7 @@ namespace QuicheInterop
          * void quiche_config_enable_hystart(quiche_config *config, bool v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnableHystart)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigEnableHystart(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool v);
 
         /*
@@ -257,6 +285,7 @@ namespace QuicheInterop
          * void quiche_config_enable_pacing(quiche_config *config, bool v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnablePacing)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigEnablePacing(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool v);
 
         /*
@@ -265,6 +294,7 @@ namespace QuicheInterop
          * void quiche_config_set_max_pacing_rate(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxPacingRate)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetMaxPacingRate(SafeHandle configHandle, ulong v);
 
         /*
@@ -275,6 +305,7 @@ namespace QuicheInterop
          *                      size_t send_queue_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnableDgram)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigEnableDgram(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool enabled, SizeT recvQueueLen, SizeT sendQueueLen);
 
         /*
@@ -283,6 +314,7 @@ namespace QuicheInterop
          * void quiche_config_set_max_connection_window(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxConnectionWindow)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetMaxConnectionWindow(SafeHandle configHandle, ulong v);
 
         /*
@@ -291,6 +323,7 @@ namespace QuicheInterop
          * void quiche_config_set_max_stream_window(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxStreamWindow)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetMaxStreamWindow(SafeHandle configHandle, ulong v);
 
         /*
@@ -299,6 +332,7 @@ namespace QuicheInterop
          * void quiche_config_set_active_connection_id_limit(quiche_config *config, uint64_t v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetActiveConnectionIdLimit)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetActiveConnectionIdLimit(SafeHandle configHandle, ulong v);
 
         /*
@@ -307,6 +341,7 @@ namespace QuicheInterop
          * void quiche_config_set_stateless_reset_token(quiche_config *config, const uint8_t *v);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetStatelessResetToken)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigSetStatelessResetToken(SafeHandle configHandle, ReadOnlySpan<byte> token);
 
         /*
@@ -315,6 +350,7 @@ namespace QuicheInterop
          * void quiche_config_free(quiche_config *config);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.Free)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConfigFree(SafeHandle configHandle);
 
         #endregion
@@ -330,6 +366,7 @@ namespace QuicheInterop
          *             uint8_t *token, size_t *token_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.HeaderInfo)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheHeaderInfo(ReadOnlySpan<byte> buf, ulong bufLen, SizeT dcil, out uint version, out byte type, Span<byte> scid, out nuint scid_len, Span<byte> dcid, out nuint dcidLen, Span<byte> token, out nuint tokenLen);
 
         /*
@@ -342,6 +379,7 @@ namespace QuicheInterop
          *                 quiche_config *config);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Accept)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial QuicheConnPtr QuicheAccept(ReadOnlySpan<byte> scid, SizeT scidLen, ReadOnlySpan<byte> odcid, SizeT odcidLen, ref SystemStructures.SockAddr localAddr, SizeT localAddrLen, ref SystemStructures.SockAddr peerAddr, SizeT peerAddrLen, SafeHandle configHandle);
 
         /*
@@ -354,6 +392,7 @@ namespace QuicheInterop
          *                  quiche_config *config);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Connect)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial QuicheConnPtr QuicheConnect([MarshalAs(UnmanagedType.LPStr)] string serverName, ReadOnlySpan<byte> scid, SizeT scidLen, ref SystemStructures.SockAddr localAddr, SizeT localAddrLen, ref SystemStructures.SockAddr peerAddr, SizeT peerAddrLen, SafeHandle configHandle);
 
         /*
@@ -364,6 +403,7 @@ namespace QuicheInterop
          *                       uint8_t *out, size_t out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.NegotiateVersion)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheNegotiateVersion(ReadOnlySpan<byte> scid, SizeT scidLen, ReadOnlySpan<byte> dcid, SizeT dcidLen, Span<byte> buffer, SizeT bufferLen);
 
         /*
@@ -376,6 +416,7 @@ namespace QuicheInterop
          *           uint32_t version, uint8_t *out, size_t out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Retry)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheRetry(ReadOnlySpan<byte> scid, SizeT scidLen, ReadOnlySpan<byte> dcid, SizeT dcidLen, ReadOnlySpan<byte> newScid, SizeT newScidLen, ReadOnlySpan<byte> token, SizeT tokenLen, uint version, ReadOnlySpan<byte> buffer, SizeT bufferLen);
 
         /*
@@ -384,6 +425,7 @@ namespace QuicheInterop
          * bool quiche_version_is_supported(uint32_t version);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.VersionIsSupported)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheVersionIsSupported(uint version);
 
@@ -398,6 +440,7 @@ namespace QuicheInterop
          *                            bool is_server);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.NewWithTls)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial QuicheConnPtr QuicheConnNewWithTls(
             ReadOnlySpan<byte> scid, SizeT scidLen,
             ReadOnlySpan<byte> odcid, SizeT odcidLen,
@@ -413,6 +456,7 @@ namespace QuicheInterop
          * bool quiche_conn_set_keylog_path(quiche_conn *conn, const char *path);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SetKeylogPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnSetKeylogPath(SafeHandle conn, [MarshalAs(UnmanagedType.LPStr)] string path);
 
@@ -423,6 +467,7 @@ namespace QuicheInterop
          *                const char *log_title, const char *log_desc);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SetQlogPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnSetQlogPath(SafeHandle conn, [MarshalAs(UnmanagedType.LPStr)] string path, [MarshalAs(UnmanagedType.LPStr)] string logTitle, [MarshalAs(UnmanagedType.LPStr)] string logDescription);
 
@@ -432,6 +477,7 @@ namespace QuicheInterop
          * int quiche_conn_set_session(quiche_conn *conn, const uint8_t *buf, size_t buf_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SetSession)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConnSetSession(SafeHandle conn, ReadOnlySpan<byte> session, SizeT sessionLen);
 
         /*
@@ -441,6 +487,7 @@ namespace QuicheInterop
          *               const quiche_recv_info *info);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Recv)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnRecv(SafeHandle conn, Span<byte> buf, ulong bufLen, ref QuicheRecvInfo recvInfo);
 
         /*
@@ -450,6 +497,7 @@ namespace QuicheInterop
          *               quiche_send_info *out_info);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Send)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnSend(SafeHandle conn, Span<byte> buf, ulong bufLen, out QuicheSendInfo sendInfo);
 
         /*
@@ -458,6 +506,7 @@ namespace QuicheInterop
          * size_t quiche_conn_send_quantum(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SendQuantum)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SizeT QuicheConnSendQuantum(SafeHandle conn);
 
         /*
@@ -467,6 +516,7 @@ namespace QuicheInterop
          *                      uint8_t *out, size_t buf_len, bool *fin);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Recv)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnStreamRecv(SafeHandle conn, ulong streamId, Span<byte> buf, ulong bufLen, [MarshalAs(UnmanagedType.U1)] out bool fin);
 
         /*
@@ -476,6 +526,7 @@ namespace QuicheInterop
          *                      const uint8_t *buf, size_t buf_len, bool fin);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Send)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnStreamSend(SafeHandle conn, ulong streamId, ReadOnlySpan<byte> buf, ulong bufLen, [MarshalAs(UnmanagedType.U1)] bool fin);
 
         /*
@@ -485,6 +536,7 @@ namespace QuicheInterop
          *                      uint8_t urgency, bool incremental);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Priority)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConnStreamPriority(SafeHandle conn, ulong streamId, byte urgency, [MarshalAs(UnmanagedType.U1)] bool incremental);
 
         /*
@@ -494,6 +546,7 @@ namespace QuicheInterop
          *                      enum quiche_shutdown direction, uint64_t err);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Shutdown)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConnStreamShutdown(SafeHandle conn, ulong streamId, QuicheShutdown direction, ulong err);
 
         /*
@@ -502,6 +555,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_stream_capacity(const quiche_conn *conn, uint64_t stream_id);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Capacity)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnStreamCapacity(SafeHandle conn, ulong streamId);
 
         /*
@@ -510,6 +564,7 @@ namespace QuicheInterop
          * bool quiche_conn_stream_readable(const quiche_conn *conn, uint64_t stream_id);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Readable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnStreamReadable(SafeHandle conn, ulong streamId);
 
@@ -520,6 +575,7 @@ namespace QuicheInterop
          * int64_t quiche_conn_stream_readable_next(quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.ReadableNext)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial long QuicheConnStreamReadableNext(SafeHandle conn);
 
         /*
@@ -530,6 +586,7 @@ namespace QuicheInterop
          * int quiche_conn_stream_writable(quiche_conn *conn, uint64_t stream_id, size_t len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Writable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConnStreamWritable(SafeHandle conn, ulong streamId, SizeT len);
 
         /*
@@ -539,6 +596,7 @@ namespace QuicheInterop
          * int64_t quiche_conn_stream_writable_next(quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.WritableNext)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial long QuicheConnStreamWritableNext(SafeHandle conn);
 
         /*
@@ -547,6 +605,7 @@ namespace QuicheInterop
          * bool quiche_conn_stream_finished(const quiche_conn *conn, uint64_t stream_id);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Finished)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnStreamFinished(SafeHandle conn, ulong streamId);
 
@@ -556,6 +615,7 @@ namespace QuicheInterop
          * quiche_stream_iter *quiche_conn_readable(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Readable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial QuicheStreamIterPtr QuicheConnReadable(SafeHandle conn);
 
         /*
@@ -564,6 +624,7 @@ namespace QuicheInterop
          * quiche_stream_iter *quiche_conn_writable(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Writable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial QuicheStreamIterPtr QuicheConnWritable(SafeHandle conn);
 
         /*
@@ -572,6 +633,7 @@ namespace QuicheInterop
          * size_t quiche_conn_max_send_udp_payload_size(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.MaxSendUdpPayloadSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SizeT QuicheConnMaxSendUdpPayloadSize(SafeHandle conn);
 
         /*
@@ -580,6 +642,7 @@ namespace QuicheInterop
          * uint64_t quiche_conn_timeout_as_nanos(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.TimeoutAsNanos)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial ulong QuicheConnTimeoutAsNanos(SafeHandle conn);
 
         /*
@@ -588,6 +651,7 @@ namespace QuicheInterop
          * uint64_t quiche_conn_timeout_as_millis(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.TimeoutAsMillis)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial ulong QuicheConnTimeoutAsMillis(SafeHandle conn);
 
         /*
@@ -596,6 +660,7 @@ namespace QuicheInterop
          * void quiche_conn_on_timeout(quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.OnTimeout)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnOnTimeout(SafeHandle conn);
 
         /*
@@ -605,6 +670,7 @@ namespace QuicheInterop
          *             const uint8_t *reason, size_t reason_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Close)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConnClose(SafeHandle conn, [MarshalAs(UnmanagedType.U1)] bool app, ulong error, ReadOnlySpan<byte> reason, ulong reasonLen);
 
         /*
@@ -613,6 +679,7 @@ namespace QuicheInterop
          * void quiche_conn_trace_id(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.TraceId)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnTraceId(SafeHandle conn, byte** dst, out ulong dstLen);
 
         /*
@@ -621,6 +688,7 @@ namespace QuicheInterop
          * void quiche_conn_source_id(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SourceId)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnSourceId(SafeHandle conn, byte** dst, out ulong dstLen);
 
         /*
@@ -629,6 +697,7 @@ namespace QuicheInterop
          * void quiche_conn_destination_id(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.DestinationId)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnDestinationId(SafeHandle conn, byte** dst, out ulong dstLen);
 
         /*
@@ -638,6 +707,7 @@ namespace QuicheInterop
          *                    size_t *out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.ApplicationProto)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnApplicationProto(SafeHandle conn, byte** dst, out ulong dstLen);
 
         /*
@@ -646,6 +716,7 @@ namespace QuicheInterop
          * void quiche_conn_peer_cert(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerCert)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnPeerCert(SafeHandle conn, byte** dst, out ulong dstLen);
 
         /*
@@ -654,6 +725,7 @@ namespace QuicheInterop
          * void quiche_conn_session(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Session)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnSession(SafeHandle conn, byte** dst, out ulong dstLen);
 
         /*
@@ -662,6 +734,7 @@ namespace QuicheInterop
          * bool quiche_conn_is_established(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsEstablished)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnIsEstablished(SafeHandle conn);
 
@@ -672,6 +745,7 @@ namespace QuicheInterop
          * bool quiche_conn_is_in_early_data(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsInEarlyData)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnIsInEarlyData(SafeHandle conn);
 
@@ -681,6 +755,7 @@ namespace QuicheInterop
          * bool quiche_conn_is_readable(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsReadable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnIsReadable(SafeHandle conn);
 
@@ -690,6 +765,7 @@ namespace QuicheInterop
          * bool quiche_conn_is_draining(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsDraining)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnIsDraining(SafeHandle conn);
 
@@ -700,6 +776,7 @@ namespace QuicheInterop
          * uint64_t quiche_conn_peer_streams_left_bidi(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerStreamsLeftBidi)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial ulong QuicheConnPeerStreamsLeftBidi(SafeHandle conn);
 
         /*
@@ -709,6 +786,7 @@ namespace QuicheInterop
          * uint64_t quiche_conn_peer_streams_left_uni(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerStreamsLeftUni)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial ulong QuicheConnPeerStreamsLeftUni(SafeHandle conn);
 
         /*
@@ -717,6 +795,7 @@ namespace QuicheInterop
          * bool quiche_conn_is_closed(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsClosed)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnIsClosed(SafeHandle conn);
 
@@ -726,6 +805,7 @@ namespace QuicheInterop
          * bool quiche_conn_is_timed_out(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsTimedOut)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnIsTimedOut(SafeHandle conn);
 
@@ -740,6 +820,7 @@ namespace QuicheInterop
          *                  size_t *reason_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerError)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnPeerError(SafeHandle conn, [MarshalAs(UnmanagedType.U1)] out bool isApp, out ulong errorCode, byte** reason, out SizeT reasonLen);
 
@@ -754,6 +835,7 @@ namespace QuicheInterop
          *                  size_t *reason_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.LocalError)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnLocalError(SafeHandle conn, [MarshalAs(UnmanagedType.U1)] out bool isApp, out ulong errorCode, byte** reason, out SizeT reasonLen);
 
@@ -764,6 +846,7 @@ namespace QuicheInterop
          * bool quiche_stream_iter_next(quiche_stream_iter *iter, uint64_t *stream_id);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stream.IterNext)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheStreamIterNext(SafeHandle iterHandle, out ulong streamId);
 
@@ -773,6 +856,7 @@ namespace QuicheInterop
          * void quiche_stream_iter_free(quiche_stream_iter *iter);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stream.IterFree)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheStreamIterFree(SafeHandle iterHandle);
 
         /*
@@ -781,6 +865,7 @@ namespace QuicheInterop
          * void quiche_conn_stats(const quiche_conn *conn, quiche_stats *out);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stats.Conn)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnStats(SafeHandle conn, out QuicheStats stats);
 
         /*
@@ -790,6 +875,7 @@ namespace QuicheInterop
          * bool quiche_conn_peer_transport_params(const quiche_conn *conn, quiche_transport_params *out);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stats.ConnPeerTransportParams)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnPeerTransportParams(SafeHandle conn, out QuicheTransportParameters transportParams);
 
@@ -802,6 +888,7 @@ namespace QuicheInterop
          * int quiche_conn_path_stats(const quiche_conn *conn, size_t idx, quiche_path_stats *out);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stats.ConnPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuicheConnPathStats(SafeHandle conn, SizeT index, out QuichePathStats stats);
 
         /*
@@ -810,6 +897,7 @@ namespace QuicheInterop
          * bool quiche_conn_is_server(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsServer)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         [return: MarshalAs(UnmanagedType.U1)]
         internal static partial bool QuicheConnIsServer(SafeHandle conn);
 
@@ -819,6 +907,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_dgram_max_writable_len(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.MaxWritableLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramMaxWritableLen(SafeHandle conn);
 
         /*
@@ -827,6 +916,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_dgram_recv_front_len(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.RecvFrontLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramRecvFrontLen(SafeHandle conn);
 
         /*
@@ -835,6 +925,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_dgram_recv_queue_len(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.RecvQueueLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramRecvQueueLen(SafeHandle conn);
 
         /*
@@ -843,6 +934,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_dgram_recv_queue_byte_size(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.RecvQueueByteSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramRecvQueueByteSize(SafeHandle conn);
 
         /*
@@ -851,6 +943,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_dgram_send_queue_len(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.SendQueueLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramSendQueueLen(SafeHandle conn);
 
         /*
@@ -859,6 +952,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_dgram_send_queue_byte_size(const quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.SendQueueByteSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramSendQueueByteSize(SafeHandle conn);
 
         /*
@@ -868,6 +962,7 @@ namespace QuicheInterop
          *                     size_t buf_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.Recv)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramRecv(SafeHandle conn, Span<byte> buffer, SizeT bufferLength);
 
         /*
@@ -877,6 +972,7 @@ namespace QuicheInterop
          *                     size_t buf_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.Send)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnDgramSend(SafeHandle conn, ReadOnlySpan<byte> buffer, SizeT bufferLength);
 
         /*
@@ -886,6 +982,7 @@ namespace QuicheInterop
          *                            bool (*f)(uint8_t *, size_t));
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.PurgeOutgoing)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnDgramPurgeOutgoing(SafeHandle conn, [MarshalAs(UnmanagedType.FunctionPtr)] QuicheConnDgramPurgeOutgoingCallback callback);
         internal delegate void QuicheConnDgramPurgeOutgoingCallback(Span<byte> buffer, SizeT bufferLength);
 
@@ -895,6 +992,7 @@ namespace QuicheInterop
          * ssize_t quiche_conn_send_ack_eliciting(quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SendAckEliciting)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnSendAckEliciting(SafeHandle conn);
 
         /*
@@ -905,6 +1003,7 @@ namespace QuicheInterop
          *                 const struct sockaddr *peer, size_t peer_len);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SendAckElicitingOnPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheConnSendAckElicitingOnPath(SafeHandle conn, ref SystemStructures.SockAddr localAddress, SizeT localAddressLength, ref SystemStructures.SockAddr peerAddress, SizeT peerAddressLength);
 
         /*
@@ -913,6 +1012,7 @@ namespace QuicheInterop
          * void quiche_conn_free(quiche_conn *conn);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Free)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial void QuicheConnFree(SafeHandle conn);
 
         /*
@@ -923,6 +1023,7 @@ namespace QuicheInterop
          *            uint64_t val);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.PutVarInt)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial int QuichePutVarInt(Span<byte> buffer, SizeT bufferLength, ulong value);
 
         /*
@@ -933,6 +1034,7 @@ namespace QuicheInterop
          *                uint64_t val);
          */
         [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.GetVarInt)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
         internal static partial SignedSizeT QuicheGetVarInt(ReadOnlySpan<byte> buffer, SizeT bufferLength, ulong value);
     }
 }

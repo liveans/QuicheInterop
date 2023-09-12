@@ -6,8 +6,8 @@ using System.Net.Security;
 
 Console.WriteLine(Quiche.Version);
 
-byte[] buffer = new byte[1350];
-byte[] sendBuffer = new byte[1350];
+Span<byte> buffer = stackalloc byte[1350];
+Span<byte> sendBuffer = stackalloc byte[1350];
 
 Quiche quiche = new Quiche();
 QuicheConfig config = new();
@@ -38,7 +38,7 @@ EndPoint remoteEp = remote;
 
 QuicheConnection connection = quiche.Connect("localhost", "ahmetahmetahmetahmet"u8, (IPEndPoint) socket.LocalEndPoint!, (IPEndPoint)remote, config);
 
-SendPacket();
+SendPacket(sendBuffer);
 
 bool requestSent = false;
 bool firstTimeInfoEstablish = false;
@@ -61,7 +61,7 @@ while (true)
                 var dataLen = (int)connection.Recv(buffer, readLen, info);
                 Console.WriteLine("Data Received Len = " + dataLen);
                 Console.WriteLine($"Data: {Encoding.ASCII.GetString(buffer[..dataLen])}");
-                string hex = BitConverter.ToString(buffer[..dataLen]).Replace("-", string.Empty);
+                string hex = BitConverter.ToString(buffer[..dataLen].ToArray()).Replace("-", string.Empty);
                 Console.WriteLine($"Data as hex: {hex}");
             }
         }
@@ -73,16 +73,16 @@ while (true)
 
     if (readLen > 0)
     {
-        //var headerInfo = quiche.GetHeaderInfo(buffer[..readLen]);
-        //if (headerInfo.Version != 0 && !quiche.CheckVersionSupport(headerInfo.Version))
-        //{
-        //    Console.WriteLine(headerInfo.Version);
-        //    Console.WriteLine("Version is not supported!");
-        //    // return;
-        //}
-        //Console.WriteLine($"DestinationConnectionId: {headerInfo.DestinationConnectionId}");
-        //Console.WriteLine($"SourceConnectionId: {headerInfo.SourceConnectionId}");
-        //Console.WriteLine($"Type: {headerInfo.Type}");
+        var headerInfo = quiche.GetHeaderInfo(buffer[..readLen]);
+        if (headerInfo.Version != 0 && !quiche.CheckVersionSupport(headerInfo.Version))
+        {
+            Console.WriteLine(headerInfo.Version);
+            Console.WriteLine("Version is not supported!");
+            // return;
+        }
+        Console.WriteLine($"DestinationConnectionId: {headerInfo.DestinationConnectionId}");
+        Console.WriteLine($"SourceConnectionId: {headerInfo.SourceConnectionId}");
+        Console.WriteLine($"Type: {headerInfo.Type}");
         //if (headerInfo.Version == 0)
         //{
         //    Console.WriteLine("Version Negotiation Packet Received!");
@@ -136,7 +136,7 @@ while (true)
         }
     }
 
-    SendPacket();
+    SendPacket(sendBuffer);
 
     if (connection.IsDraining())
     {
@@ -145,7 +145,7 @@ while (true)
     }
 }
 
-void SendPacket()
+void SendPacket(Span<byte> sendBuffer)
 {
     while (true)
     {

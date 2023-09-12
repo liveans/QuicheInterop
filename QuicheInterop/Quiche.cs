@@ -35,9 +35,9 @@ namespace QuicheInterop
 
             QuicheApi.QuicheHeaderInfo(buffer, (ulong)buffer.Length, 0, out var version, out var type, scidSpan, out var scidLen, dcidSpan, out var dcidLen, tokenSpan, out var tokenLen);
 
-            scid = Encoding.ASCII.GetString(scidSpan[..(int)scidLen]);
-            dcid = Encoding.ASCII.GetString(dcidSpan[..(int)dcidLen]);
-            token = Encoding.ASCII.GetString(tokenSpan[..(int)tokenLen]);
+            scid = Encoding.UTF8.GetString(scidSpan[..(int)scidLen]);
+            dcid = Encoding.UTF8.GetString(dcidSpan[..(int)dcidLen]);
+            token = Encoding.UTF8.GetString(tokenSpan[..(int)tokenLen]);
 
             return new QuicheHeaderInfo(version, type, scid, dcid, token);
         }

@@ -1,266 +1,1040 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 using QuicheConnPtr = nint;
 using QuicheConfigPtr = nint;
 using QuicheStreamIterPtr = nint;
+using SizeT = nuint;
+using SignedSizeT = nint;
+using System.Runtime.CompilerServices;
+using System.Text;
+[assembly: DisableRuntimeMarshalling]
 
 namespace QuicheInterop
 {
     internal sealed unsafe partial class QuicheApi
     {
-        //[LibraryImport("quiche", EntryPoint = "quiche_conn_send")]
-        //internal static partial long QuicheConnSend(nint handle, byte* outValue, ulong outLen, QuicheSendInfo* sendInfo);
+        private const string QuicheLibraryName = "quiche";
 
-        //[LibraryImport("quiche", EntryPoint = "quiche_conn_recv")]
-        //internal static partial long QuicheConnRecv(nint handle, byte* outValue, ulong outLen, QuicheRecvInfo* receiveInfo);
+        #region Config APIs
 
-        internal static readonly delegate* unmanaged[Cdecl]<byte*> QuicheVersion;
-        internal static readonly delegate* unmanaged[Cdecl]<delegate* unmanaged[Cdecl]<byte*, void*, void>, void*, int> QuicheEnableDebugLogging;
-        internal static readonly delegate* unmanaged[Cdecl]<uint, QuicheConfigPtr> QuicheConfigNew;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int> QuicheConfigLoadCertChainFromPemFile;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int> QuicheConfigLoadPrivKeyFromPemFile;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int> QuicheConfigLoadVerifyLocationsFromFile;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int> QuicheConfigLoadVerifyLocationsFromDirectory;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void> QuicheConfigVerifyPeer;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void> QuicheConfigGrease;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, void> QuicheConfigLogKeys;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, void> QuicheConfigEnableEarlyData;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, ulong, int> QuicheConfigSetApplicationProtocols;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetMaxIdleTimeout;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetMaxRecvUdpPayloadSize;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetMaxSendUdpPayloadSize;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetInitialMaxData;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetInitialMaxStreamDataBidiLocal;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetInitialMaxStreamDataBidiRemote;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetInitialMaxStreamDataUni;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetInitialMaxStreamsBidi;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetInitialMaxStreamsUni;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetAckDelayExponent;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetMaxAckDelay;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void> QuicheConfigSetDisableActiveMigration;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, int, void> QuicheConfigSetCcAlgorithm;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void> QuicheConfigEnableHystart;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void> QuicheConfigEnablePacing;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetMaxPacingRate;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, ulong, ulong, void> QuicheConfigEnableDgram;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetMaxConnectionWindow;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetMaxStreamWindow;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void> QuicheConfigSetActiveConnectionIdLimit;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, void> QuicheConfigSetStatelessResetToken;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConfigPtr, void> QuicheConfigFree;
-        
-        internal static readonly delegate* unmanaged[Cdecl]<byte*, ulong, ulong, uint*, byte*, byte*, ulong*, byte*, ulong*, byte*, ulong*, int> QuicheHeaderInfo;
-        // TODO (aaksoy) : Change nint types with sockaddr struct itself
-        internal static readonly delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, QuicheConfigPtr, QuicheConnPtr> QuicheAccept;
-        internal static readonly delegate* unmanaged[Cdecl]<byte*, byte*, ulong, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, QuicheConfigPtr, QuicheConnPtr> QuicheConnect;
+        /*
+         * C API:
+         * // Returns a human readable string with the quiche version number.
+         * const char *quiche_version(void);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Version)]
+        private static partial byte* QuicheVersion();
+        internal static string Version => Encoding.UTF8.GetString(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(QuicheVersion()));
 
-        internal static readonly delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, byte*, ulong, long> QuicheNegotiateVersion;
-        internal static readonly delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, byte*, ulong, byte*, ulong, uint, byte*, ulong, long> QuicheRetry;
-        internal static readonly delegate* unmanaged[Cdecl]<uint, byte> QuicheVersionIsSupported;
-        internal static readonly delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, QuicheConfigPtr, void*, byte, QuicheConnPtr> QuicheConnNewWithTls;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, byte> QuicheConnSetKeylogPath;
-        // internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, int, void> QuicheConnSetKeylogFd;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, byte*, byte*, byte> QuicheConnSetQlogPath;
-        // internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, int, byte*, byte*, void> QuicheConnSetQlogFd;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, int> QuicheConnSetSession;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, QuicheRecvInfo*, long> QuicheConnRecv;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, QuicheSendInfo*, long> QuicheConnSend;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong> QuicheConnSendQuantum;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte*, ulong, byte*, long> QuicheConnStreamRecv;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte*, ulong, byte, long> QuicheConnStreamSend;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte, byte, int> QuicheConnStreamPriority;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, int, ulong, int> QuicheConnStreamShutdown;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, long> QuicheConnStreamCapacity;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte> QuicheConnStreamReadable;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnStreamReadableNext;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, ulong, int> QuicheConnStreamWritable;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnStreamWritableNext;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte> QuicheConnStreamFinished;
+        /*
+         * C API:
+         * // Enables logging. |cb| will be called with log messages
+         * int quiche_enable_debug_logging(void (*cb)(const char *line, void *argp),
+         *                      void *argp);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.EnableDebugLogging)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheEnableDebugLogging([MarshalAs(UnmanagedType.FunctionPtr)] QuicheLogCallback logCallback, void* argp);
+        internal delegate void QuicheLogCallback([MarshalAs(UnmanagedType.LPStr)] string line, void* argp);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, QuicheStreamIterPtr> QuicheConnReadable;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, QuicheStreamIterPtr> QuicheConnWritable;
+        /*
+         * C API:
+         * // Creates a config object with the given version.
+         * quiche_config *quiche_config_new(uint32_t version);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.ConfigurationNew)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial QuicheConfigPtr QuicheConfigNew(uint version);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong> QuicheConnMaxSendUdpPayloadSize;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong> QuicheConnTimeoutAsNanos;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong> QuicheConnTimeoutAsMillis;
+        /*
+         * C API:
+         * // Configures the given certificate chain.
+         * int quiche_config_load_cert_chain_from_pem_file(quiche_config *config,
+         *                                      const char *path);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadCertChainFromPemFile)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConfigLoadCertChainFromPemFile(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, void> QuicheConnOnTimeout;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte, ulong, byte*, ulong, int> QuicheConnClose;
+        /*
+         * C API:
+         * // Configures the given private key.
+         * int quiche_config_load_priv_key_from_pem_file(quiche_config *config,
+         *                                    const char *path);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadPrivKeyFromPemFile)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConfigLoadPrivKeyFromPemFile(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void> QuicheConnTraceId;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void> QuicheConnSourceId;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void> QuicheConnDestinationId;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void> QuicheConnApplicationProto;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void> QuicheConnPeerCert;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void> QuicheConnSession;
+        /*
+         * C API:
+         * // Specifies a file where trusted CA certificates are stored for the purposes of certificate verification.
+         * int quiche_config_load_verify_locations_from_file(quiche_config *config,
+         *                                        const char *path);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadVerifyLocationsFromFile)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConfigLoadVerifyLocationsFromFile(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte> QuicheConnIsEstablished;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte> QuicheConnIsInEarlyData;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte> QuicheConnIsReadable;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte> QuicheConnIsDraining;
+        /*
+         * C API:
+         * // Specifies a directory where trusted CA certificates are stored for the purposes of certificate verification.
+         * int quiche_config_load_verify_locations_from_directory(quiche_config *config,
+         *                                             const char *path);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LoadVerifyLocationsFromDirectory)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConfigLoadVerifyLocationsFromDirectory(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string path);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong> QuicheConnPeerStreamsLeftBidi;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong> QuicheConnPeerStreamsLeftUni;
+        /*
+         * C API:
+         * // Configures whether to verify the peer's certificate.
+         * void quiche_config_verify_peer(quiche_config *config, bool v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.VerifyPeer)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigVerifyPeer(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool verifyPeer);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte> QuicheConnIsClosed;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte> QuicheConnIsTimedOut;
+        /*
+         * C API:
+         * // Configures whether to send GREASE.
+         * void quiche_config_grease(quiche_config *config, bool v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.Grease)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigGrease(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool grease);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong*, byte**, ulong*, byte> QuicheConnPeerError;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong*, byte**, ulong*, byte> QuicheConnLocalError;
+        /*
+         * C API:
+         * // Enables logging of secrets.
+         * void quiche_config_log_keys(quiche_config *config);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.LogKeys)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigLogKeys(SafeHandle configHandle);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheStreamIterPtr, ulong*, byte> QuicheStreamIterNext;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheStreamIterPtr, void> QuicheStreamIterFree;
+        /*
+         * C API:
+         * // Enables sending or receiving early data.
+         * void quiche_config_enable_early_data(quiche_config *config);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnableEarlyData)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigEnableEarlyData(SafeHandle configHandle);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, QuicheStats*, void> QuicheConnStats;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, QuichePathStats*, int> QuicheConnPathStats;
+        /*
+         * C API:
+         * // Configures the list of supported application protocols.
+         * int quiche_config_set_application_protos(quiche_config *config,
+         *                               const uint8_t *protos,
+         *                               size_t protos_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetApplicationProtocols)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConfigSetApplicationProtocols(SafeHandle configHandle, ReadOnlySpan<byte> protos, SizeT protosLen);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte> QuicheConnIsServer;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnDgramMaxWritableLen;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnDgramRecvFrontLen;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnDgramRecvQueueLen;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnDgramRecvQueueByteSize;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnDgramSendQueueLen;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnDgramSendQueueByteSize;
+        /*
+         * C API:
+         * // Sets the `max_idle_timeout` transport parameter, in milliseconds, default is
+         * // no timeout.
+         * void quiche_config_set_max_idle_timeout(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxIdleTimeout)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetMaxIdleTimeout(SafeHandle configHandle, ulong timeout);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, long> QuicheConnDgramRecv;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, long> QuicheConnDgramSend;
+        /*
+         * C API:
+         * // Sets the `max_udp_payload_size transport` parameter.
+         * void quiche_config_set_max_recv_udp_payload_size(quiche_config *config, size_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxRecvUdpPayloadSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetMaxRecvUdpPayloadSize(SafeHandle configHandle, SizeT size);
 
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, delegate* unmanaged[Cdecl]<byte*, ulong, byte>, void> QuicheConnDgramPurgeOutgoing;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, long> QuicheConnSendAckEliciting;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, long> QuicheConnSendAckElicitingOnPath;
-        internal static readonly delegate* unmanaged[Cdecl]<QuicheConnPtr, void> QuicheConnFree;
+        /*
+         * C API:
+         * // Sets the maximum outgoing UDP payload size.
+         * void quiche_config_set_max_send_udp_payload_size(quiche_config *config, size_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxSendUdpPayloadSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
 
-        internal static bool IsValid { get; set; }
+        internal static partial void QuicheConfigSetMaxSendUdpPayloadSize(SafeHandle configHandle, SizeT size);
 
-        private static void Log(string data)
-        {
-            Console.WriteLine(data);
-        }
-        static QuicheApi()
-        {
-            string LibraryPostfix = OperatingSystem.IsWindows() ? "dll" : "so";
-            bool loaded = NativeLibrary.TryLoad($"quiche.{LibraryPostfix}", typeof(QuicheApi).Assembly, null, handle: out IntPtr quicheHandle); ;
+        /*
+         * C API:
+         * // Sets the `initial_max_data` transport parameter.
+         * void quiche_config_set_initial_max_data(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxData)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetInitialMaxData(SafeHandle configHandle, ulong v);
 
-            if (!loaded)
-            {
-                Log("Problem on loading library!");
-                return;
-            }
+        /*
+         * C API:
+         * // Sets the `initial_max_stream_data_bidi_local` transport parameter.
+         * void quiche_config_set_initial_max_stream_data_bidi_local(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamDataBidiLocal)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetInitialMaxStreamDataBidiLocal(SafeHandle configHandle, ulong v);
 
-            Log("Library Loaded!");
+        /*
+         * C API:
+         * // Sets the `initial_max_stream_data_bidi_remote` transport parameter.
+         * void quiche_config_set_initial_max_stream_data_bidi_remote(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamDataBidiRemote)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetInitialMaxStreamDataBidiRemote(SafeHandle configHandle, ulong v);
 
-            QuicheVersion = (delegate* unmanaged[Cdecl]<byte*>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Version);
-            QuicheEnableDebugLogging = (delegate* unmanaged[Cdecl]<delegate* unmanaged[Cdecl]<byte*, void*, void>, void*, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.EnableDebugLogging);
+        /*
+         * C API:
+         * // Sets the `initial_max_stream_data_uni` transport parameter.
+         * void quiche_config_set_initial_max_stream_data_uni(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamDataUni)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetInitialMaxStreamDataUni(SafeHandle configHandle, ulong v);
 
-            QuicheConfigNew = (delegate* unmanaged[Cdecl]<uint, nint>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.ConfigurationNew);
-            QuicheConfigLoadCertChainFromPemFile = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.LoadCertChainFromPemFile);
-            QuicheConfigLoadPrivKeyFromPemFile = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.LoadPrivKeyFromPemFile);
-            QuicheConfigLoadVerifyLocationsFromFile = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.LoadVerifyLocationsFromFile);
-            QuicheConfigLoadVerifyLocationsFromDirectory = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.LoadVerifyLocationsFromDirectory);
-            QuicheConfigVerifyPeer = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.VerifyPeer);
-            QuicheConfigGrease = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.Grease);
-            QuicheConfigLogKeys = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.LogKeys);
-            QuicheConfigEnableEarlyData = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.EnableEarlyData);
-            QuicheConfigSetApplicationProtocols = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, ulong, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetApplicationProtocols);
-            QuicheConfigSetMaxIdleTimeout = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetMaxIdleTimeout);
-            QuicheConfigSetMaxRecvUdpPayloadSize = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetMaxRecvUdpPayloadSize);
-            QuicheConfigSetMaxSendUdpPayloadSize = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetMaxSendUdpPayloadSize);
-            QuicheConfigSetInitialMaxData = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetInitialMaxData);
-            QuicheConfigSetInitialMaxStreamDataBidiLocal = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetInitialMaxStreamDataBidiLocal);
-            QuicheConfigSetInitialMaxStreamDataBidiRemote = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetInitialMaxStreamDataBidiRemote);
-            QuicheConfigSetInitialMaxStreamDataUni = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetInitialMaxStreamDataUni);
-            QuicheConfigSetInitialMaxStreamsBidi = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetInitialMaxStreamsBidi);
-            QuicheConfigSetInitialMaxStreamsUni = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetInitialMaxStreamsUni);
-            QuicheConfigSetAckDelayExponent = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetAckDelayExponent);
-            QuicheConfigSetMaxAckDelay = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetMaxAckDelay);
-            QuicheConfigSetDisableActiveMigration = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetDisableActiveMigration);
-            QuicheConfigSetCcAlgorithm = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, int, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetCcAlgorithm);
-            QuicheConfigEnableHystart = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.EnableHystart);
-            QuicheConfigEnablePacing = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.EnablePacing);
-            QuicheConfigSetMaxPacingRate = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetMaxPacingRate);
-            QuicheConfigEnableDgram = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte, ulong, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.EnableDgram);
-            QuicheConfigSetMaxConnectionWindow = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetMaxConnectionWindow);
-            QuicheConfigSetMaxStreamWindow = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetMaxStreamWindow);
-            QuicheConfigSetActiveConnectionIdLimit = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, ulong, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetActiveConnectionIdLimit);
-            QuicheConfigSetStatelessResetToken = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, byte*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.SetStatelessResetToken);
-            QuicheConfigFree = (delegate* unmanaged[Cdecl]<QuicheConfigPtr, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Config.Free);
+        /*
+         * C API:
+         * // Sets the `initial_max_streams_bidi` transport parameter.
+         * void quiche_config_set_initial_max_streams_bidi(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamsBidi)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetInitialMaxStreamsBidi(SafeHandle configHandle, ulong v);
 
-            QuicheHeaderInfo = (delegate* unmanaged[Cdecl]<byte*, ulong, ulong, uint*, byte*, byte*, ulong*, byte*, ulong*, byte*, ulong*, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.HeaderInfo);
-            QuicheAccept = (delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, QuicheConfigPtr, QuicheConnPtr>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Accept);
-            QuicheConnect = (delegate* unmanaged[Cdecl]<byte*, byte*, ulong, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, QuicheConfigPtr, QuicheConnPtr>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Connect);
-            QuicheNegotiateVersion = (delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, byte*, ulong, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.NegotiateVersion);
-            QuicheRetry = (delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, byte*, ulong, byte*, ulong, uint, byte*, ulong, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Retry);
-            QuicheVersionIsSupported = (delegate* unmanaged[Cdecl]<uint, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.VersionIsSupported);
+        /*
+         * C API:
+         * // Sets the `initial_max_streams_uni` transport parameter.
+         * void quiche_config_set_initial_max_streams_uni(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialMaxStreamsUni)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetInitialMaxStreamsUni(SafeHandle configHandle, ulong v);
 
-            QuicheConnNewWithTls = (delegate* unmanaged[Cdecl]<byte*, ulong, byte*, ulong, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, QuicheConfigPtr, void*, byte, QuicheConnPtr>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.NewWithTls);
-            QuicheConnSetKeylogPath = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SetKeylogPath);
-            // QuicheConnSetKeylogFd = (delegate* unmanaged[Cdecl]<QuicheConnPtr, int, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SetKeylogFd);
-            QuicheConnSetQlogPath = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, byte*, byte*, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SetQlogPath);
-            // QuicheConnSetQlogFd = (delegate* unmanaged[Cdecl]<QuicheConnPtr, int, byte*, byte*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SetQlogFd);
-            QuicheConnSetSession = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SetSession);
-            QuicheConnRecv = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, QuicheRecvInfo*, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Recv);
-            QuicheConnSend = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, QuicheSendInfo*, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Send);
-            QuicheConnSendQuantum = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SendQuantum);
+        /*
+         * C API:
+         * // Sets the `ack_delay_exponent` transport parameter.
+         * void quiche_config_set_ack_delay_exponent(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetAckDelayExponent)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetAckDelayExponent(SafeHandle configHandle, ulong v);
 
-            QuicheConnStreamRecv = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte*, ulong, byte*, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Recv);
-            QuicheConnStreamSend = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte*, ulong, byte, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Send);
-            QuicheConnStreamPriority = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte, byte, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Priority);
-            QuicheConnStreamShutdown = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, int, ulong, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Shutdown);
-            QuicheConnStreamCapacity = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Capacity);
-            QuicheConnStreamReadable = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Readable);
-            QuicheConnStreamReadableNext = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.ReadableNext);
-            QuicheConnStreamWritable = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, ulong, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Writable);
-            QuicheConnStreamWritableNext = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.WritableNext);
-            QuicheConnStreamFinished = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Stream.Finished);
+        /*
+         * C API:
+         * // Sets the `max_ack_delay` transport parameter.
+         * void quiche_config_set_max_ack_delay(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxAckDelay)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetMaxAckDelay(SafeHandle configHandle, ulong v);
 
-            QuicheConnReadable = (delegate* unmanaged[Cdecl]<QuicheConnPtr, QuicheStreamIterPtr>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Readable);
-            QuicheConnWritable = (delegate* unmanaged[Cdecl]<QuicheConnPtr, QuicheStreamIterPtr>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Writable);
-            QuicheConnMaxSendUdpPayloadSize = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.MaxSendUdpPayloadSize);
-            QuicheConnTimeoutAsNanos = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.TimeoutAsNanos);
-            QuicheConnTimeoutAsMillis = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.TimeoutAsMillis);
-            QuicheConnOnTimeout = (delegate* unmanaged[Cdecl]<QuicheConnPtr, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.OnTimeout);
-            QuicheConnClose = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte, ulong, byte*, ulong, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Close);
-            QuicheConnTraceId = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.TraceId);
-            QuicheConnSourceId = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SourceId);
-            QuicheConnDestinationId = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.DestinationId);
-            QuicheConnApplicationProto = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.ApplicationProto);
-            QuicheConnPeerCert = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.PeerCert);
-            QuicheConnSession = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte**, ulong*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Session);
-            QuicheConnIsEstablished = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.IsEstablished);
-            QuicheConnIsInEarlyData = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.IsInEarlyData);
-            QuicheConnIsReadable = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.IsReadable);
-            QuicheConnIsDraining = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.IsDraining);
-            QuicheConnPeerStreamsLeftBidi = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.PeerStreamsLeftBidi);
-            QuicheConnPeerStreamsLeftUni = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.PeerStreamsLeftUni);
-            QuicheConnIsClosed = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.IsClosed);
-            QuicheConnIsTimedOut = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.IsTimedOut);
-            QuicheConnPeerError = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong*, byte**, ulong*, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.PeerError);
-            QuicheConnLocalError = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong*, byte**, ulong*, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.LocalError);
+        /*
+         * C API:
+         * // Sets the `disable_active_migration` transport parameter.
+         * void quiche_config_set_disable_active_migration(quiche_config *config, bool v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetDisableActiveMigration)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetDisableActiveMigration(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool v);
 
-            QuicheStreamIterNext = (delegate* unmanaged[Cdecl]<QuicheStreamIterPtr, ulong*, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Stream.IterNext);
-            QuicheStreamIterFree = (delegate* unmanaged[Cdecl]<QuicheStreamIterPtr, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Stream.IterFree);
+        /*
+         * C API:
+         * // Sets the congestion control algorithm used by string.
+         * int quiche_config_set_cc_algorithm_name(quiche_config *config, const char *algo);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetCcAlgorithmByName)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConfigSetCcAlgorithmByName(SafeHandle configHandle, [MarshalAs(UnmanagedType.LPStr)] string ccAlgorithmName);
 
-            QuicheConnStats = (delegate* unmanaged[Cdecl]<QuicheConnPtr, QuicheStats*, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Stats.Conn);
-            QuicheConnPathStats = (delegate* unmanaged[Cdecl]<QuicheConnPtr, ulong, QuichePathStats*, int>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Stats.ConnPath);
-            QuicheConnIsServer = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.IsServer);
+        /*
+         * C API:
+         * // Sets the initial cwnd for the connection in terms of packet count.
+         * void quiche_config_set_initial_congestion_window_packets(quiche_config *config, size_t packets);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetInitialCongestionWindowPackets)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetInitialCongestionWindowPackets(SafeHandle configHandle, SizeT packets);
 
-            QuicheConnDgramMaxWritableLen = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.MaxWritableLen);
-            QuicheConnDgramRecvFrontLen = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.RecvFrontLen);
-            QuicheConnDgramRecvQueueLen = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.RecvQueueLen);
-            QuicheConnDgramRecvQueueByteSize = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.RecvQueueByteSize);
-            QuicheConnDgramSendQueueLen = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.SendQueueLen);
-            QuicheConnDgramSendQueueByteSize = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.SendQueueByteSize);
-            QuicheConnDgramRecv = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.Recv);
-            QuicheConnDgramSend = (delegate* unmanaged[Cdecl]<QuicheConnPtr, byte*, ulong, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.Send);
-            QuicheConnDgramPurgeOutgoing = (delegate* unmanaged[Cdecl]<QuicheConnPtr, delegate* unmanaged[Cdecl]<byte*, ulong, byte>, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Dgram.PurgeOutgoing);
-            QuicheConnSendAckEliciting = (delegate* unmanaged[Cdecl]<QuicheConnPtr, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SendAckEliciting);
-            QuicheConnSendAckElicitingOnPath = (delegate* unmanaged[Cdecl]<QuicheConnPtr, SystemStructures.SockAddr*, ulong, SystemStructures.SockAddr*, ulong, long>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.SendAckElicitingOnPath);
-            QuicheConnFree = (delegate* unmanaged[Cdecl]<QuicheConnPtr, void>)NativeLibrary.GetExport(quicheHandle, QuicheApiNames.Conn.Free);
+        /*
+         * C API:
+         * // Sets the congestion control algorithm used.
+         * void quiche_config_set_cc_algorithm(quiche_config *config, enum quiche_cc_algorithm algo);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetCcAlgorithm)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetCcAlgorithm(SafeHandle configHandle, QuicheCcAlgorithm ccAlgorithm);
 
+        /*
+         * C API:
+         * // Configures whether to use HyStart++.
+         * void quiche_config_enable_hystart(quiche_config *config, bool v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnableHystart)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigEnableHystart(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool v);
 
-            IsValid = true;
-        }
+        /*
+         * C API:
+         * // Configures whether to enable pacing (enabled by default).
+         * void quiche_config_enable_pacing(quiche_config *config, bool v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnablePacing)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigEnablePacing(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool v);
 
+        /*
+         * C API:
+         * // Configures max pacing rate to be used.
+         * void quiche_config_set_max_pacing_rate(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxPacingRate)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetMaxPacingRate(SafeHandle configHandle, ulong v);
+
+        /*
+         * C API:
+         * // Configures whether to enable receiving DATAGRAM frames.
+         * void quiche_config_enable_dgram(quiche_config *config, bool enabled,
+         *                      size_t recv_queue_len,
+         *                      size_t send_queue_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.EnableDgram)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigEnableDgram(SafeHandle configHandle, [MarshalAs(UnmanagedType.U1)] bool enabled, SizeT recvQueueLen, SizeT sendQueueLen);
+
+        /*
+         * C API:
+         * // Sets the maximum connection window.
+         * void quiche_config_set_max_connection_window(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxConnectionWindow)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetMaxConnectionWindow(SafeHandle configHandle, ulong v);
+
+        /*
+         * C API:
+         * // Sets the maximum stream window.
+         * void quiche_config_set_max_stream_window(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetMaxStreamWindow)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetMaxStreamWindow(SafeHandle configHandle, ulong v);
+
+        /*
+         * C API:
+         * // Sets the limit of active connection IDs.
+         * void quiche_config_set_active_connection_id_limit(quiche_config *config, uint64_t v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetActiveConnectionIdLimit)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetActiveConnectionIdLimit(SafeHandle configHandle, ulong v);
+
+        /*
+         * C API:
+         * // Sets the initial stateless reset token. |v| must contain 16 bytes, otherwise the behaviour is undefined.
+         * void quiche_config_set_stateless_reset_token(quiche_config *config, const uint8_t *v);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.SetStatelessResetToken)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigSetStatelessResetToken(SafeHandle configHandle, ReadOnlySpan<byte> token);
+
+        /*
+         * C API:
+         * // Frees the config object.
+         * void quiche_config_free(quiche_config *config);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Config.Free)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConfigFree(SafeHandle configHandle);
+
+        #endregion
+
+        /*
+         * C API:
+         * // Extracts version, type, source / destination connection ID and address
+         * // verification token from the packet in |buf|.
+         * int quiche_header_info(const uint8_t *buf, size_t buf_len, size_t dcil,
+         *             uint32_t *version, uint8_t *type,
+         *             uint8_t *scid, size_t *scid_len,
+         *             uint8_t *dcid, size_t *dcid_len,
+         *             uint8_t *token, size_t *token_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.HeaderInfo)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheHeaderInfo(ReadOnlySpan<byte> buf, ulong bufLen, SizeT dcil, out uint version, out byte type, Span<byte> scid, out nuint scid_len, Span<byte> dcid, out nuint dcidLen, Span<byte> token, out nuint tokenLen);
+
+        /*
+         * C API:
+         * // Creates a new server-side connection.
+         * quiche_conn *quiche_accept(const uint8_t *scid, size_t scid_len,
+         *                 const uint8_t *odcid, size_t odcid_len,
+         *                 const struct sockaddr *local, size_t local_len,
+         *                 const struct sockaddr *peer, size_t peer_len,
+         *                 quiche_config *config);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Accept)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial QuicheConnPtr QuicheAccept(ReadOnlySpan<byte> scid, SizeT scidLen, ReadOnlySpan<byte> odcid, SizeT odcidLen, ref SystemStructures.SockAddr localAddr, SizeT localAddrLen, ref SystemStructures.SockAddr peerAddr, SizeT peerAddrLen, SafeHandle configHandle);
+
+        /*
+         * C API:
+         * // Creates a new client-side connection.
+         * quiche_conn *quiche_connect(const char *server_name,
+         *                  const uint8_t *scid, size_t scid_len,
+         *                  const struct sockaddr *local, size_t local_len,
+         *                  const struct sockaddr *peer, size_t peer_len,
+         *                  quiche_config *config);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Connect)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial QuicheConnPtr QuicheConnect([MarshalAs(UnmanagedType.LPStr)] string serverName, ReadOnlySpan<byte> scid, SizeT scidLen, ref SystemStructures.SockAddr localAddr, SizeT localAddrLen, ref SystemStructures.SockAddr peerAddr, SizeT peerAddrLen, SafeHandle configHandle);
+
+        /*
+         * C API:
+         * // Writes a version negotiation packet.
+         * ssize_t quiche_negotiate_version(const uint8_t *scid, size_t scid_len,
+         *                       const uint8_t *dcid, size_t dcid_len,
+         *                       uint8_t *out, size_t out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.NegotiateVersion)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheNegotiateVersion(ReadOnlySpan<byte> scid, SizeT scidLen, ReadOnlySpan<byte> dcid, SizeT dcidLen, Span<byte> buffer, SizeT bufferLen);
+
+        /*
+         * C API:
+         * // Writes a retry packet.
+         * ssize_t quiche_retry(const uint8_t *scid, size_t scid_len,
+         *           const uint8_t *dcid, size_t dcid_len,
+         *           const uint8_t *new_scid, size_t new_scid_len,
+         *           const uint8_t *token, size_t token_len,
+         *           uint32_t version, uint8_t *out, size_t out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Retry)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheRetry(ReadOnlySpan<byte> scid, SizeT scidLen, ReadOnlySpan<byte> dcid, SizeT dcidLen, ReadOnlySpan<byte> newScid, SizeT newScidLen, ReadOnlySpan<byte> token, SizeT tokenLen, uint version, ReadOnlySpan<byte> buffer, SizeT bufferLen);
+
+        /*
+         * C API:
+         * // Returns true if the given protocol version is supported.
+         * bool quiche_version_is_supported(uint32_t version);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.VersionIsSupported)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheVersionIsSupported(uint version);
+
+        /*
+         * C API:
+         * // Creates a new quiche connection with tls information.
+         * quiche_conn *quiche_conn_new_with_tls(const uint8_t *scid, size_t scid_len,
+         *                            const uint8_t *odcid, size_t odcid_len,
+         *                            const struct sockaddr *local, size_t local_len,
+         *                            const struct sockaddr *peer, size_t peer_len,
+         *                            const quiche_config *config, void *ssl,
+         *                            bool is_server);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.NewWithTls)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial QuicheConnPtr QuicheConnNewWithTls(
+            ReadOnlySpan<byte> scid, SizeT scidLen,
+            ReadOnlySpan<byte> odcid, SizeT odcidLen,
+            ref SystemStructures.SockAddr localAddr, SizeT localAddrLen,
+            ref SystemStructures.SockAddr peerAddr, SizeT peerAddrLen,
+            SafeHandle configHandle, void* ssl,
+            [MarshalAs(UnmanagedType.U1)] bool isServer
+        );
+
+        /*
+         * C API:
+         * // Enables keylog to the specified file path. Returns true on success.
+         * bool quiche_conn_set_keylog_path(quiche_conn *conn, const char *path);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SetKeylogPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnSetKeylogPath(SafeHandle conn, [MarshalAs(UnmanagedType.LPStr)] string path);
+
+        /*
+         * C API:
+         * // Enables qlog to the specified file path. Returns true on success.
+         * bool quiche_conn_set_qlog_path(quiche_conn *conn, const char *path,
+         *                const char *log_title, const char *log_desc);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SetQlogPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnSetQlogPath(SafeHandle conn, [MarshalAs(UnmanagedType.LPStr)] string path, [MarshalAs(UnmanagedType.LPStr)] string logTitle, [MarshalAs(UnmanagedType.LPStr)] string logDescription);
+
+        /*
+         * C API:
+         * // Configures the given session for resumption.
+         * int quiche_conn_set_session(quiche_conn *conn, const uint8_t *buf, size_t buf_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SetSession)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConnSetSession(SafeHandle conn, ReadOnlySpan<byte> session, SizeT sessionLen);
+
+        /*
+         * C API:
+         * // Processes QUIC packets received from the peer.
+         * ssize_t quiche_conn_recv(quiche_conn *conn, uint8_t *buf, size_t buf_len,
+         *               const quiche_recv_info *info);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Recv)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnRecv(SafeHandle conn, Span<byte> buf, ulong bufLen, ref QuicheRecvInfo recvInfo);
+
+        /*
+         * C API:
+         * // Writes a single QUIC packet to be sent to the peer.
+         * ssize_t quiche_conn_send(quiche_conn *conn, uint8_t *out, size_t out_len,
+         *               quiche_send_info *out_info);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Send)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnSend(SafeHandle conn, Span<byte> buf, ulong bufLen, out QuicheSendInfo sendInfo);
+
+        /*
+         * C API:
+         * // Returns the size of the send quantum, in bytes.
+         * size_t quiche_conn_send_quantum(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SendQuantum)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SizeT QuicheConnSendQuantum(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Reads contiguous data from a stream.
+         * ssize_t quiche_conn_stream_recv(quiche_conn *conn, uint64_t stream_id,
+         *                      uint8_t *out, size_t buf_len, bool *fin);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Recv)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnStreamRecv(SafeHandle conn, ulong streamId, Span<byte> buf, ulong bufLen, [MarshalAs(UnmanagedType.U1)] out bool fin);
+
+        /*
+         * C API:
+         * // Writes data to a stream.
+         * ssize_t quiche_conn_stream_send(quiche_conn *conn, uint64_t stream_id,
+         *                      const uint8_t *buf, size_t buf_len, bool fin);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Send)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnStreamSend(SafeHandle conn, ulong streamId, ReadOnlySpan<byte> buf, ulong bufLen, [MarshalAs(UnmanagedType.U1)] bool fin);
+
+        /*
+         * C API:
+         * // Sets the priority for a stream.
+         * int quiche_conn_stream_priority(quiche_conn *conn, uint64_t stream_id,
+         *                      uint8_t urgency, bool incremental);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Priority)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConnStreamPriority(SafeHandle conn, ulong streamId, byte urgency, [MarshalAs(UnmanagedType.U1)] bool incremental);
+
+        /*
+         * C API:
+         * // Shuts down reading or writing from/to the specified stream.
+         * int quiche_conn_stream_shutdown(quiche_conn *conn, uint64_t stream_id,
+         *                      enum quiche_shutdown direction, uint64_t err);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Shutdown)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConnStreamShutdown(SafeHandle conn, ulong streamId, QuicheShutdown direction, ulong err);
+
+        /*
+         * C API:
+         * // Returns the stream's send capacity in bytes.
+         * ssize_t quiche_conn_stream_capacity(const quiche_conn *conn, uint64_t stream_id);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Capacity)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnStreamCapacity(SafeHandle conn, ulong streamId);
+
+        /*
+         * C API:
+         * // Returns true if the stream has data that can be read.
+         * bool quiche_conn_stream_readable(const quiche_conn *conn, uint64_t stream_id);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Readable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnStreamReadable(SafeHandle conn, ulong streamId);
+
+        /*
+         * C API:
+         * // Returns the next stream that has data to read, or -1 if no such stream is
+         * // available.
+         * int64_t quiche_conn_stream_readable_next(quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.ReadableNext)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial long QuicheConnStreamReadableNext(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns true if the stream has enough send capacity.
+         * //
+         * // On error a value lower than 0 is returned.
+         * int quiche_conn_stream_writable(quiche_conn *conn, uint64_t stream_id, size_t len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Writable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConnStreamWritable(SafeHandle conn, ulong streamId, SizeT len);
+
+        /*
+         * C API:
+         * // Returns the next stream that can be written to, or -1 if no such stream is
+         * // available.
+         * int64_t quiche_conn_stream_writable_next(quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.WritableNext)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial long QuicheConnStreamWritableNext(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns true if all the data has been read from the specified stream.
+         * bool quiche_conn_stream_finished(const quiche_conn *conn, uint64_t stream_id);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Stream.Finished)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnStreamFinished(SafeHandle conn, ulong streamId);
+
+        /*
+         * C API:
+         * // Returns an iterator over streams that have outstanding data to read.
+         * quiche_stream_iter *quiche_conn_readable(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Readable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial QuicheStreamIterPtr QuicheConnReadable(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns an iterator over streams that can be written to.
+         * quiche_stream_iter *quiche_conn_writable(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Writable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial QuicheStreamIterPtr QuicheConnWritable(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the maximum possible size of egress UDP payloads.
+         * size_t quiche_conn_max_send_udp_payload_size(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.MaxSendUdpPayloadSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SizeT QuicheConnMaxSendUdpPayloadSize(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the amount of time until the next timeout event, in nanoseconds.
+         * uint64_t quiche_conn_timeout_as_nanos(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.TimeoutAsNanos)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial ulong QuicheConnTimeoutAsNanos(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the amount of time until the next timeout event, in milliseconds.
+         * uint64_t quiche_conn_timeout_as_millis(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.TimeoutAsMillis)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial ulong QuicheConnTimeoutAsMillis(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Processes a timeout event.
+         * void quiche_conn_on_timeout(quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.OnTimeout)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnOnTimeout(SafeHandle conn);
+
+        /*
+         * C API:
+         *  // Closes the connection with the given error and reason.
+         *  int quiche_conn_close(quiche_conn *conn, bool app, uint64_t err,
+         *             const uint8_t *reason, size_t reason_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Close)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConnClose(SafeHandle conn, [MarshalAs(UnmanagedType.U1)] bool app, ulong error, ReadOnlySpan<byte> reason, ulong reasonLen);
+
+        /*
+         * C API:
+         * // Returns a string uniquely representing the connection.
+         * void quiche_conn_trace_id(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.TraceId)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnTraceId(SafeHandle conn, byte** dst, out ulong dstLen);
+
+        /*
+         * C API:
+         * // Returns the source connection ID.
+         * void quiche_conn_source_id(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SourceId)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnSourceId(SafeHandle conn, byte** dst, out ulong dstLen);
+
+        /*
+         * C API:
+         * // Returns the destination connection ID.
+         * void quiche_conn_destination_id(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.DestinationId)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnDestinationId(SafeHandle conn, byte** dst, out ulong dstLen);
+
+        /*
+         * C API:
+         * // Returns the negotiated ALPN protocol.
+         * void quiche_conn_application_proto(const quiche_conn *conn, const uint8_t **out,
+         *                    size_t *out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.ApplicationProto)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnApplicationProto(SafeHandle conn, byte** dst, out ulong dstLen);
+
+        /*
+         * C API:
+         * // Returns the peer's leaf certificate (if any) as a DER-encoded buffer.
+         * void quiche_conn_peer_cert(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerCert)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnPeerCert(SafeHandle conn, byte** dst, out ulong dstLen);
+
+        /*
+         *  C API:
+         * // Returns the serialized cryptographic session for the connection.
+         * void quiche_conn_session(const quiche_conn *conn, const uint8_t **out, size_t *out_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Session)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnSession(SafeHandle conn, byte** dst, out ulong dstLen);
+
+        /*
+         * C API:
+         * // Returns true if the connection handshake is complete.
+         * bool quiche_conn_is_established(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsEstablished)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnIsEstablished(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns true if the connection has a pending handshake that has progressed
+         * // enough to send or receive early data.
+         * bool quiche_conn_is_in_early_data(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsInEarlyData)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnIsInEarlyData(SafeHandle conn);
+
+        /*
+         * C API:
+         * // // Returns whether there is stream or DATAGRAM data available to read.
+         * bool quiche_conn_is_readable(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsReadable)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnIsReadable(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns true if the connection is in the process of being closed.
+         * bool quiche_conn_is_draining(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsDraining)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnIsDraining(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the number of bidirectional streams that can be created
+         * // before the peer's stream count limit is reached.
+         * uint64_t quiche_conn_peer_streams_left_bidi(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerStreamsLeftBidi)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial ulong QuicheConnPeerStreamsLeftBidi(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the number of unidirectional streams that can be created
+         * // before the peer's stream count limit is reached.
+         * uint64_t quiche_conn_peer_streams_left_uni(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerStreamsLeftUni)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial ulong QuicheConnPeerStreamsLeftUni(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns true if the connection is closed.
+         * bool quiche_conn_is_closed(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsClosed)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnIsClosed(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns true if the connection was closed due to the idle timeout.
+         * bool quiche_conn_is_timed_out(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsTimedOut)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnIsTimedOut(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns true if a connection error was received, and updates the provided
+         * // parameters accordingly.
+         * bool quiche_conn_peer_error(const quiche_conn *conn,
+         *                  bool *is_app,
+         *                  uint64_t *error_code,
+         *                  const uint8_t **reason,
+         *                  size_t *reason_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.PeerError)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnPeerError(SafeHandle conn, [MarshalAs(UnmanagedType.U1)] out bool isApp, out ulong errorCode, byte** reason, out SizeT reasonLen);
+
+        /*
+         * C API:
+         * // Returns true if a connection error was queued or sent, and updates the provided
+         * // parameters accordingly.
+         * bool quiche_conn_local_error(const quiche_conn *conn,
+         *                  bool *is_app,
+         *                  uint64_t *error_code,
+         *                  const uint8_t **reason,
+         *                  size_t *reason_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.LocalError)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnLocalError(SafeHandle conn, [MarshalAs(UnmanagedType.U1)] out bool isApp, out ulong errorCode, byte** reason, out SizeT reasonLen);
+
+        /*
+         * C API:
+         * // Fetches the next stream from the given iterator. Returns false if there are
+         * // no more elements in the iterator.
+         * bool quiche_stream_iter_next(quiche_stream_iter *iter, uint64_t *stream_id);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stream.IterNext)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheStreamIterNext(SafeHandle iterHandle, out ulong streamId);
+
+        /*
+         * C API:
+         * // Frees the given stream iterator.
+         * void quiche_stream_iter_free(quiche_stream_iter *iter);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stream.IterFree)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheStreamIterFree(SafeHandle iterHandle);
+
+        /*
+         * C API:
+         * // Collects and returns statistics about the connection.
+         * void quiche_conn_stats(const quiche_conn *conn, quiche_stats *out);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stats.Conn)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnStats(SafeHandle conn, out QuicheStats stats);
+
+        /*
+         * C API:
+         * // Returns the peer's transport parameters in |out|. Returns false if we have
+         * // not yet processed the peer's transport parameters.
+         * bool quiche_conn_peer_transport_params(const quiche_conn *conn, quiche_transport_params *out);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stats.ConnPeerTransportParams)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnPeerTransportParams(SafeHandle conn, out QuicheTransportParameters transportParams);
+
+        /*
+         * C API:
+         * // Collects and returns statistics about the specified path for the connection.
+         * //
+         * // The `idx` argument represent the path's index (also see the `paths_count`
+         * // field of `quiche_stats`).
+         * int quiche_conn_path_stats(const quiche_conn *conn, size_t idx, quiche_path_stats *out);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Stats.ConnPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuicheConnPathStats(SafeHandle conn, SizeT index, out QuichePathStats stats);
+
+        /*
+         * C API:
+         * // Returns whether or not this is a server-side connection.
+         * bool quiche_conn_is_server(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.IsServer)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        [return: MarshalAs(UnmanagedType.U1)]
+        internal static partial bool QuicheConnIsServer(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the maximum DATAGRAM payload that can be sent.
+         * ssize_t quiche_conn_dgram_max_writable_len(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.MaxWritableLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramMaxWritableLen(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the length of the first stored DATAGRAM.
+         * ssize_t quiche_conn_dgram_recv_front_len(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.RecvFrontLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramRecvFrontLen(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the number of items in the DATAGRAM receive queue.
+         * ssize_t quiche_conn_dgram_recv_queue_len(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.RecvQueueLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramRecvQueueLen(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the total size of all items in the DATAGRAM receive queue.
+         * ssize_t quiche_conn_dgram_recv_queue_byte_size(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.RecvQueueByteSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramRecvQueueByteSize(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the number of items in the DATAGRAM send queue.
+         * ssize_t quiche_conn_dgram_send_queue_len(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.SendQueueLen)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramSendQueueLen(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Returns the total size of all items in the DATAGRAM send queue.
+         * ssize_t quiche_conn_dgram_send_queue_byte_size(const quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.SendQueueByteSize)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramSendQueueByteSize(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Reads the first received DATAGRAM.
+         * ssize_t quiche_conn_dgram_recv(quiche_conn *conn, uint8_t *buf,
+         *                     size_t buf_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.Recv)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramRecv(SafeHandle conn, Span<byte> buffer, SizeT bufferLength);
+
+        /*
+         * C API:
+         * // Sends data in a DATAGRAM frame.
+         * ssize_t quiche_conn_dgram_send(quiche_conn *conn, const uint8_t *buf,
+         *                     size_t buf_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.Send)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnDgramSend(SafeHandle conn, ReadOnlySpan<byte> buffer, SizeT bufferLength);
+
+        /*
+         * C API:
+         * // Purges queued outgoing DATAGRAMs matching the predicate.
+         * void quiche_conn_dgram_purge_outgoing(quiche_conn *conn,
+         *                            bool (*f)(uint8_t *, size_t));
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Dgram.PurgeOutgoing)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnDgramPurgeOutgoing(SafeHandle conn, [MarshalAs(UnmanagedType.FunctionPtr)] QuicheConnDgramPurgeOutgoingCallback callback);
+        internal delegate void QuicheConnDgramPurgeOutgoingCallback(Span<byte> buffer, SizeT bufferLength);
+
+        /*
+         * C API:
+         * // Schedule an ack-eliciting packet on the active path.
+         * ssize_t quiche_conn_send_ack_eliciting(quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SendAckEliciting)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnSendAckEliciting(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Schedule an ack-eliciting packet on the specified path.
+         * ssize_t quiche_conn_send_ack_eliciting_on_path(quiche_conn *conn,
+         *                 const struct sockaddr *local, size_t local_len,
+         *                 const struct sockaddr *peer, size_t peer_len);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.SendAckElicitingOnPath)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheConnSendAckElicitingOnPath(SafeHandle conn, ref SystemStructures.SockAddr localAddress, SizeT localAddressLength, ref SystemStructures.SockAddr peerAddress, SizeT peerAddressLength);
+
+        /*
+         * C API:
+         * // Frees the connection object.
+         * void quiche_conn_free(quiche_conn *conn);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.Conn.Free)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial void QuicheConnFree(SafeHandle conn);
+
+        /*
+         * C API:
+         * // Writes an unsigned variable-length integer in network byte-order into
+         * // the provided buffer.
+         * int quiche_put_varint(uint8_t *buf, size_t buf_len,
+         *            uint64_t val);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.PutVarInt)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial int QuichePutVarInt(Span<byte> buffer, SizeT bufferLength, ulong value);
+
+        /*
+         * C API:
+         * // Reads an unsigned variable-length integer in network byte-order from
+         * // the provided buffer and returns the wire length.
+         * ssize_t quiche_get_varint(const uint8_t *buf, size_t buf_len,
+         *                uint64_t val);
+         */
+        [LibraryImport(QuicheLibraryName, EntryPoint = QuicheApiNames.GetVarInt)]
+        [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
+        internal static partial SignedSizeT QuicheGetVarInt(ReadOnlySpan<byte> buffer, SizeT bufferLength, ulong value);
     }
 }

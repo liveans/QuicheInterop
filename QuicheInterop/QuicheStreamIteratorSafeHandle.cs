@@ -7,19 +7,18 @@ using System.Threading.Tasks;
 
 namespace QuicheInterop
 {
-    internal unsafe class QuicheStreamIteratorSafeHandle : SafeHandle
+    internal class QuicheStreamIteratorSafeHandle : SafeHandle
     {
-        private readonly delegate* unmanaged[Cdecl]<nint, void> _QuicheStreamIterFree;
         public QuicheStreamIteratorSafeHandle(nint handle, bool ownsHandle = true) : base(handle, ownsHandle)
         {
-            _QuicheStreamIterFree = QuicheApi.QuicheStreamIterFree;
+            
         }
 
         public override bool IsInvalid => handle == IntPtr.Zero;
 
         protected override bool ReleaseHandle()
         {
-            _QuicheStreamIterFree(handle);
+            QuicheApi.QuicheStreamIterFree(this);
             SetHandle(IntPtr.Zero);
             SetHandleAsInvalid();
             return true;

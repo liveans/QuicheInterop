@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace QuicheInterop
+﻿namespace QuicheInterop
 {
     internal class QuicheStream
     {
@@ -13,7 +7,7 @@ namespace QuicheInterop
         private readonly QuicheConnection _connection;
         internal ulong StreamId => _streamId;
         internal QuicheConnection Connection => _connection;
-        private nint _connHandle => _connection.Handle.DangerousGetHandle();
+        private QuicheConnectionSafeHandle _connHandle => _connection.Handle;
         internal QuicheStream(QuicheConnection connection)
         {
             _streamId = Interlocked.Increment(ref streamIdCounter);
@@ -26,55 +20,45 @@ namespace QuicheInterop
             _connection = connection;
         }
 
-        internal unsafe (long, bool) Recv(Span<byte> buffer)
+        internal (long, bool) Recv(Span<byte> buffer)
         {
-            byte finished = 0;
-            long writtenBytes = 0;
-            fixed (byte* bufferPtr = buffer)
-            {
-                writtenBytes = QuicheApi.QuicheConnStreamRecv(_connHandle, _streamId, bufferPtr, (ulong)buffer.Length, &finished);
-            }
-            return (writtenBytes, finished > 0);
+            long writtenBytes = QuicheApi.QuicheConnStreamRecv(_connHandle, _streamId, buffer, (ulong)buffer.Length, out bool finished);
+            return (writtenBytes, finished);
         }
 
-        internal unsafe long Send(ReadOnlySpan<byte> buffer, bool finished)
+        internal long Send(ReadOnlySpan<byte> buffer, bool finished)
         {
-            long writtenBytes = 0;
-            fixed (byte* bufferPtr = buffer)
-            {
-                writtenBytes = QuicheApi.QuicheConnStreamSend(_connHandle, _streamId, bufferPtr, (ulong)buffer.Length, Convert.ToByte(finished));
-            }
-            return writtenBytes;
+            return QuicheApi.QuicheConnStreamSend(_connHandle, _streamId, buffer, (ulong)buffer.Length, finished);
         }
 
-        internal unsafe int SetPriority(int priority, bool incremental)
+        internal int SetPriority(int priority, bool incremental)
         {
-            return QuicheApi.QuicheConnStreamPriority(_connHandle, _streamId, (byte)priority, Convert.ToByte(incremental));
+            return QuicheApi.QuicheConnStreamPriority(_connHandle, _streamId, (byte)priority, incremental);
         }
 
-        internal unsafe int Shutdown(QuicheShutdown shutdownDirection, QuicheErrorCode errorCode)
+        internal int Shutdown(QuicheShutdown shutdownDirection, QuicheErrorCode errorCode)
         {
-            return QuicheApi.QuicheConnStreamShutdown(_connHandle, _streamId, (int)shutdownDirection, (ulong)errorCode);
+            return QuicheApi.QuicheConnStreamShutdown(_connHandle, _streamId, shutdownDirection, (ulong)errorCode);
         }
 
-        internal unsafe long GetCapacity()
+        internal long GetCapacity()
         {
             return QuicheApi.QuicheConnStreamCapacity(_connHandle, _streamId);
         }
 
-        internal unsafe bool IsReadable()
+        internal bool IsReadable()
         {
-            return QuicheApi.QuicheConnStreamReadable(_connHandle, _streamId) > 0;
+            return QuicheApi.QuicheConnStreamReadable(_connHandle, _streamId);
         }
 
-        internal unsafe int IsWritable(int len)
+        internal int IsWritable(int len)
         {
-            return QuicheApi.QuicheConnStreamWritable(_connHandle, _streamId, (ulong) len);
+            return QuicheApi.QuicheConnStreamWritable(_connHandle, _streamId, (nuint)len);
         }
 
-        internal unsafe bool IsFinished()
+        internal bool IsFinished()
         {
-            return QuicheApi.QuicheConnStreamFinished(_connHandle, _streamId) > 0;
+            return QuicheApi.QuicheConnStreamFinished(_connHandle, _streamId);
         }
     }
 }

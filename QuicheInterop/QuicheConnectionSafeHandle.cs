@@ -7,20 +7,18 @@ using System.Threading.Tasks;
 
 namespace QuicheInterop
 {
-    internal unsafe class QuicheConnectionSafeHandle : SafeHandle
+    internal class QuicheConnectionSafeHandle : SafeHandle
     {
-        private readonly delegate* unmanaged[Cdecl]<nint, void> _QuicheConnectionFree;
 
         public QuicheConnectionSafeHandle(nint handle, bool ownsHandle = true) : base(handle, ownsHandle)
         {
-            _QuicheConnectionFree = QuicheApi.QuicheConnFree;
         }
 
         public override bool IsInvalid => DangerousGetHandle() == IntPtr.Zero;
 
         protected override bool ReleaseHandle()
         {
-            _QuicheConnectionFree(DangerousGetHandle());
+            QuicheApi.QuicheConnFree(this);
             SetHandle(IntPtr.Zero);
             SetHandleAsInvalid();
 

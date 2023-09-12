@@ -9,48 +9,45 @@ namespace QuicheInterop
     internal class QuicheDatagram
     {
         private readonly QuicheConnection _connection;
-        private nint _connHandle => _connection.Handle.DangerousGetHandle();
-        public QuicheDatagram(QuicheConnection connection) 
+        private QuicheConnectionSafeHandle _connHandle => _connection.Handle;
+        public QuicheDatagram(QuicheConnection connection)
         {
             _connection = connection;
         }
 
-        internal unsafe long MaxWritableLen()
+        internal long MaxWritableLen()
         {
             return QuicheApi.QuicheConnDgramMaxWritableLen(_connHandle);
         }
 
-        internal unsafe long ReceiveFrontLen()
+        internal long ReceiveFrontLen()
         {
             return QuicheApi.QuicheConnDgramRecvFrontLen(_connHandle);
         }
 
-        internal unsafe long ReceiveQueueLen()
+        internal long ReceiveQueueLen()
         {
             return QuicheApi.QuicheConnDgramRecvQueueLen(_connHandle);
         }
 
-        internal unsafe long ReceiveQueueByteSize()
+        internal long ReceiveQueueByteSize()
         {
             return QuicheApi.QuicheConnDgramRecvQueueByteSize(_connHandle);
         }
 
-        internal unsafe long SendQueueLen()
+        internal long SendQueueLen()
         {
             return QuicheApi.QuicheConnDgramSendQueueLen(_connHandle);
         }
 
-        internal unsafe long SendQueueByteSize()
+        internal long SendQueueByteSize()
         {
             return QuicheApi.QuicheConnDgramSendQueueByteSize(_connHandle);
         }
 
-        internal unsafe long Send(ReadOnlySpan<byte> buffer)
+        internal long Send(ReadOnlySpan<byte> buffer)
         {
-            fixed (byte* bufferPtr = buffer)
-            {
-                return QuicheApi.QuicheConnDgramSend(_connHandle, bufferPtr, (ulong) buffer.Length);
-            }
+            return QuicheApi.QuicheConnDgramSend(_connHandle, buffer, (nuint)buffer.Length);
         }
 
         // TODO : Implement Datagram Purge Outgoing API
